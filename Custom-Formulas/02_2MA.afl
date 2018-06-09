@@ -1,0 +1,64 @@
+{//Option
+	//SetOption("NoDefaultColumns", True );
+	P = ParamField("Price field",-1);
+	ShortTerm = Param("Short Term period",18,1,100,1);
+	LongTerm = Param("Long Term period",118,20,500,1);
+}
+{//Moving Average
+	ma18 = EMA( P, ShortTerm );
+	ma118 = MA( P, LongTerm );
+	pCrossma118 = Cross(C,ma118);
+	Cross9Above50 = Cross( ma18, ma118 );
+	Cross9Below50 = Cross( ma118, ma18 );
+	Condition1 = Flip( Cross9Below50, Cross9Above50 );
+	Condition2 = Flip( Cross9Above50, Cross9Below50 );
+	Count1 = BarsSince( Condition1 ); // if you don't want to count the crossing bar, then "-1"
+	Count2 = BarsSince( Condition2 );
+}
+{ // RSI
+	rsiUp = RSI(55) > 55;
+}
+{// I like to make my Explorations "easy on the eyes"
+	dynamic_color = IIf(Cross9Above50 OR Cross9Below50, colorYellow, colorDefault );
+	dynamic_color2 = IIf(Count1 >0, colorlime, colorDefault );
+	dynamic_color3 = IIf(Count2 >0, colorRose, colorDefault );
+}
+{// Charting //
+	PriceColor = IIf( ma18 >= ma118 AND C >= ma18, colorGreen ,
+							IIf( ma18 >= ma118 AND C < ma18 AND C >= ma118, colorBlue ,
+								IIf( ma18 >= ma118 AND C < ma18 AND  C < ma118, colorBrown, 
+									IIf(  ma18 < ma118 AND C >=  ma118, colorYellow,
+										IIf(  ma18 < ma118 AND C <  ma118 AND C >= ma18, colorYellow,
+											IIf( ma18 < ma118 AND C < ma18, colorRed, colorBlack))))));
+}
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", PriceColor, styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+_SECTION_BEGIN("Count");
+//Plot( Count1, "Count1", colorGreen, styleThick );
+//Plot( Count2, "Count2", colorRed, styleThick );
+_SECTION_END();
+{//Explorer
+	liq = MA(Volume,10) * MA(Avg,10) > 3000000;
+	Filter = pCrossma118;
+	AddColumn( Close, "Close" );
+	AddColumn( ma18, "ma18", 1.2, colorDefault, dynamic_color );
+	AddColumn( ma118, "ma118", 1.2, colorDefault, dynamic_color );
+	AddColumn( Count1, "#bar Short GRT Long", 1.0, colorDefault, dynamic_color2 );
+	AddColumn( Count2, "#bar Long GRT Short", 1.0,colorDefault, dynamic_color3 );
+}
+{//Back Testing Option
+	SetOption("InitialEquity", 100000);
+	SetOption("MaxOpenPositions", 100 );
+	PositionSize = -2; // invest 2% of portfolio equity in single trade
+	priceRange = C > 0.8;
+}
+{//Back Testing
+	Buy = rsiUp AND PriceColor == colorGreen AND (Ref(PriceColor,-1) == colorBlue OR Ref(PriceColor,-1) == colorYellow)AND liq AND priceRange;
+	Sell = 0;
+}
+{//Apply Stop
+	ApplyStop(stopTypeNBar, stopModeBars, 5);
+}

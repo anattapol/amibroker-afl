@@ -1,0 +1,235 @@
+//Volume Price Analysis AFL - VPA Version 1.0
+//AFL by Karthikmarar. Detailed explanation available at http://www.vpanalysis.blogspot.com
+//====================================================================================
+_SECTION_BEGIN("Volume Price Analysis - V.1.0");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+//=======================================================================================
+DTL=Param("Linear regression period",60,10,100,10);
+wbf=Param("WRB factor",1.5,1.3,2.5,.1);
+nbf=Param("NRB factor",0.7,0.3,0.9,0.1);
+TL=LinRegSlope(MA(C, DTL),2);
+Vlp=Param("Volume lookback period",30,20,300,10);
+Vrg=MA(V,Vlp);
+St = StDev(Vrg,Vlp);
+Vp3 = Vrg + 3*st;
+Vp2 = Vrg + 2*st;;
+Vp1 = Vrg + 1*st;;
+Vn1 = Vrg -1*st;
+Vn2 = Vrg -2*st;
+rg=(H-L);
+arg=Wilders(rg,30);
+wrb=rg>(wbf*arg);
+nrb=rg<(nbf*arg);
+Vl=V<Ref(V,-1) AND V<Ref(V,-2);
+upbar=C>Ref(C,-1);
+dnbar=C<Ref(C,-1);
+Vh=V>Ref(V,-1) AND Ref(V,-1)>Ref(V,-2);
+Cloc=C-L;
+x=rg/Cloc;
+x1=IIf(Cloc=0,arg,x);
+Vb=V>Vrg OR V>Ref(V,-1);
+ucls=x1<2;
+dcls=x1>2;
+mcls=x1<2.2 AND x1>1.8 ;
+Vlcls=x1>4;
+Vhcls=x1<1.35;
+j=MA(C,5);
+TLL=LinRegSlope(j,40) ;
+Tlm=LinRegSlope(j,15) ;
+tls=LinRegSlope(j,5);
+mp=(H+L)/2;
+_SECTION_END();
+//==========================================================================================
+_SECTION_BEGIN("VSA");
+utbar=wrb AND dcls AND tls>0 ;
+utcond1=Ref(utbar,-1) AND dnbar ;
+utcond2=Ref(utbar,-1) AND dnbar AND V>Ref(V,-1);
+utcond3=utbar AND V> 2*Vrg;
+trbar=Ref(V,-1)>Vrg AND Ref(upbar,-1) AND Ref(wrb,-1) AND dnbar AND dcls AND wrb AND tll>0 AND H==HHV(H,10);
+Hutbar=Ref(upbar,-1) AND Ref(V,-1)>1.5*Vrg AND dnbar AND dcls AND NOT wrb AND NOT utbar;
+Hutcond=Ref(Hutbar,-1) AND dnbar AND dcls AND NOT utbar;
+tcbar=Ref(upbar,-1) AND H==HHV(H,5)AND dnbar AND (dcls OR mcls) AND V>vrg AND NOT wrb AND NOT Hutbar ;
+Scond1=(utcond1 OR utcond2 OR utcond3) ;
+Scond2=Ref(scond1,-1)==0;
+scond=scond1 AND scond2;
+stdn0= tll<0 AND V>Ref(V,-1) AND Ref(dnbar,-1) AND upbar AND (ucls OR mcls) AND tls<0 AND tlm<0;
+stdn= V>Ref(V,-1) AND Ref(dnbar,-1) AND upbar AND (ucls OR mcls) AND tls<0 AND tlm<0;
+stdn1= tll<0 AND V>(vrg*1.5) AND Ref(dnbar,-1) AND upbar AND (ucls OR mcls)AND tls<0 AND tlm<0;
+stdn2=tls<0 AND Ref(V,-1)<Vrg AND upbar AND vhcls AND V>Vrg;
+bycond1= stdn OR stdn1;
+bycond= upbar AND Ref(bycond1,-1);
+stvol= L==LLV(L,5) AND (ucls OR mcls) AND V>1.5*Vrg AND tll<0;
+ndbar=upbar AND nrb AND Vl AND dcls ;
+nsbar=dnbar AND nrb AND Vl AND dcls ;
+nbbar= C>Ref(C,-1) AND Vl AND nrb AND x1<2;
+nbbar= IIf(C>Ref(C,-1) AND V<Ref(V,-1) AND V<Ref(V,-2) AND x1<1.1,1,0);
+lvtbar= vl AND L<Ref(L,-1) AND ucls;
+lvtbar1= V<Vrg AND L<Ref(L,-1) AND ucls AND tll>0 AND tlm>0 AND wrb;
+lvtbar2= Ref(Lvtbar,-1) AND upbar AND ucls;
+dbar= V>2*Vrg AND dcls AND upbar AND tls>0 AND tlm>0 AND NOT Scond1 AND NOT utbar;
+eftup=H>Ref(H,-1) AND L>Ref(L,-1) AND C>Ref(C,-1) AND C>=((H-L)*0.7+L) AND rg>arg AND V>Ref(V,-1);
+eftupfl=Ref(eftup,-1) AND (utbar OR utcond1 OR utcond2 OR utcond3);
+eftdn=H<Ref(H,-1) AND L<Ref(L,-1) AND C<Ref(C,-1) AND C<=((H-L)*0.25+L) AND rg>arg AND V>Ref(V,-1);
+_SECTION_END();
+//=======================================================================================================================
+_SECTION_BEGIN("Chart");
+Vcolor=IIf(tls>0 AND tlm>0 AND tll>0,colorLime,IIf(tls>0 AND tlm>0 AND tll<0,colorGreen,
+IIf(tls>0 AND tlm<0 AND tll<0,colorPaleGreen,IIf(tls<0 AND tlm<0 AND tll<0,colorRed,IIf(tls<0 AND tlm>0 AND tll>0,colorPaleGreen,
+IIf(tls<0 AND tlm<0 AND tll>0,colorOrange,colorBlue))))));
+GraphXSpace = 5;
+PlotOHLC( Open, High, Low, Close, "", vcolor, styleBar | styleThick );
+_SECTION_END();
+//============================================================================================================================
+// commentary
+_SECTION_BEGIN("Commentary");
+Vpc= utbar OR utcond1 OR utcond2 OR utcond3 OR stdn0 OR stdn1 OR stdn2 OR stdn OR lvtbar1 OR Lvtbar OR Lvtbar2 OR Hutbar OR Hutcond OR ndbar OR stvol OR tcbar;
+
+if( Status("action") == actionCommentary )
+(
+printf ( "=========================" +"\n"));
+printf ( "VOLUME PRICE ANALYSIS" +"\n");
+printf ( "www.vpanalysis.blogspot.com" +"\n");
+printf ( "=========================" +"\n");
+printf ( Name() + " - " +Interval(2) + " - " + Date() +" - " +"\n"+"High-"+H+"\n"+"Low-"+L+"\n"+"Open-"+O+"\n"+
+"Close-"+C+"\n"+ "Volume= "+ WriteVal(V)+"\n");
+WriteIf(Vpc,"=======================","");
+WriteIf(Vpc,"VOLUME ANALYSIS COMMENTARY:\n","");
+
+WriteIf(utbar , "Up-thrusts are designed to catch stops and to mislead as many traders as possible.
+They are normally seen after there has been weakness in the background. The market makers know that the
+market is weak, so the price is marked up to catch stops, encourage traders to go long in a weak market,
+AND panic traders that are already Short into covering their very good position.","")+
+WriteIf(utcond3,"This upthrust bar is at high volume.This is a sure sign of weakness. One may even seriously
+consider ending the Longs AND be ready to reverse","")+WriteIf(utbar OR utcond3," Also note that A wide spread
+down-bar that appears immediately after any up-thrust, tends to confirm the weakness (the market makers are
+locking in traders into poor positions).
+With the appearance of an upthrust you should
+certainly be paying attention to your trade AND your stops. On many upthrusts you will find that the market will
+'test' almost immediately.","")+WriteIf(utcond1 , "A wide spread down bar following a Upthrust Bar.
+This confirms weakness. The Smart Money is locking in Traders into poor positions","");
+WriteIf(utcond2 , "Also here the volume is high( Above Average).This is a sure sign of weakness. The Smart Money is
+locking in Traders into poor positions","")+WriteIf(stdn, "Strength Bar. The stock has been in a down Trend. An upbar
+with higher Volume closing near the High is a sign of strength returning. The downtrend is likely to reverse soon. ","")+
+WriteIf(stdn1,"Here the volume is very much above average. This makes this indication more stronger. ","")+
+WriteIf(bycond,"The previous bar saw strength coming back. This upbar confirms strength. ","")+
+WriteIf(Hutbar," A pseudo Upthrust. This normally appears after an Up Bar with above average volume. This looks like an upthrust bar
+closing down near the Low. But the Volume is normally Lower than average. this is a sign of weakness.If the Volume is High then weakness
+increases. Smart Money is trying to trap the retailers into bad position. ","")+
+WriteIf(Hutcond, "A downbar after a pseudo Upthrust Confirms weakness. If the volume is above average the weakness is increased. ","")+
+WriteIf(Lvtbar2,"The previous bar was a successful Test of supply. The current bar is a upbar with higher volume. This confirms strength","")+
+WriteIf(dbar,"A wide range, high volume bar in a up trend closing down is an indication the Distribution is in progress. The smart money
+is Selling the stock to the late Comers rushing to Buy the stock NOT to be Left Out Of a Bullish move. ","")+
+WriteIf(Lvtbar2,"The previous bar was a successful Test of supply. The current bar is a upbar with higher volume. This confirms strength","")+
+WriteIf(tcbar,"The stock has been moving up on high volume. The current bar is a Downbar with high volume. Indicates weakness and probably end of the up move","")+
+WriteIf(eftup,"Effort to Rise bar. This normally found in the beginning of a Markup Phase and is bullish sign.These may be found at the top of an Upmove as the Smart money makes a
+last effort to move the price to the maximum","")+
+WriteIf(eftdn,"Effort to Fall bar. This normally found in the beginning of a Markdown phase.","")+
+
+WriteIf(nsbar,"No Supply. A no supply bar indicates supply has been removed and the Smart money can markup the price. It is better to wait for confirmation","")+
+WriteIf(stvol,"Stopping Volume. This will be an downbar during a bearish period closing towards the Top accompanied by High volume.
+A stopping Volume normally indicates that smart money is absorbing the supply which is a Indication that they are Bullishon the MArket.
+Hence we Can expect a reversal in the down trend. ","")+
+WriteIf(ndbar, "No Demand
+Brief Description:
+Any up bar which closes in the middle OR Low, especially if the Volume has fallen off,
+is a potential sign of weakness.
+
+Things to Look Out for:
+if the market is still strong, you will normally see signs of strength in the next few bars,
+which will most probably show itself as a:
+* Down bar with a narrow spread, closing in the middle OR High.
+* Down bar on Low Volume.","");
+_SECTION_END();
+
+//=========================================================================================
+//ploting the chart shapes
+_SECTION_BEGIN("Indications");
+PlotShapes( shapeSmallSquare*(utbar AND NOT scond) , colorRed, 0, H, 10 );
+PlotShapes(shapeSmallCircle*trbar, colorBlue, 0, H, 20 );
+PlotShapes(shapeSmallDownTriangle*scond, colorRed, 0, H,-20);
+PlotShapes(shapeSmallSquare*stdn, colorLime, 0, L, -20 );
+PlotShapes(shapeSmallSquare*stdn1, colorLime, 0, L, -20 );
+PlotShapes(shapeSmallSquare*lvtbar1, colorLime, 0, L, -20 );
+PlotShapes(shapeSmallUpTriangle*lvtbar2, colorYellow, 0, L, -20 );
+PlotShapes(shapeHollowSmallCircle*stvol, colorLime, 0, L, -10 );
+PlotShapes(shapeSmallUpTriangle*bycond, colorLime, 0, L, -20 );
+PlotShapes(shapeSmallSquare*(Hutbar) , colorBlue, 0, H, 10 );
+PlotShapes(shapeSmallDownTriangle*(Hutcond) , colorBlue, 0, H, -20 );
+PlotShapes(shapeSmallDownTriangle*tcbar , colorYellow, 0, H, -20 );
+PlotShapes(shapeSmallUpTriangle*stdn2, colorAqua, 0, L, -20 );
+PlotShapes(shapeSmallSquare*(dbar) , colorBlue, 0, H, 10 );
+PlotShapes(shapeSmallSquare*lvtbar, colorCustom12, 0, L, -20);
+PlotShapes(shapeSmallSquare*(ndbar) , colorBlue, 0, H, 10 );
+PlotShapes(shapeSmallCircle*nsbar, colorLime, 0, L, -20 );
+PlotShapes(shapeSmallCircle*eftup, colorTurquoise, 0, mp, 0 );
+PlotShapes(shapeSmallCircle*eftdn, colorYellow, 0, mp, 0 );
+
+_SECTION_END();
+//======================================================================================================================================================================================
+//TITLE
+_SECTION_BEGIN("Title");
+if( Status("action") == actionIndicator )
+(
+Title = EncodeColor(colorWhite)+ "Volume Price Analysis" + " - " + Name() + " - " + EncodeColor(colorRed)+ Interval(2) + EncodeColor(colorWhite) +
+" - " + Date() +" - " +EncodeColor(colorLime)+ "Volume= "+WriteVal(V)+"--"+EncodeColor(colorYellow)+
+WriteIf (utbar, " An Upthrust Bar. A sign of weakness. ","")+
+WriteIf (utcond1, " A downbar after an Upthrust. Confirm weakness. ","")+
+WriteIf (utcond2 AND NOT utcond1, " A High Volume downbar after an Upthrust. Confirm weakness.","")+
+WriteIf (utcond3, "This upthrust at very High Voume, Confirms weakness","")+
+WriteIf (stdn1, "Strength seen returning after a down trend. High volume adds to strength. ","")+
+WriteIf (stdn0 AND NOT stdn, "Strength seen returning after a down trend. ","")+
+WriteIf (stdn AND NOT stdn1, "Strength seen returning after a long down trend. ","")+
+WriteIf (Lvtbar, "Test for supply. ","")+
+WriteIf (Lvtbar2, "An Upbar closing near High after a Test confirms strength. ","")+
+WriteIf (bycond, "An Upbar closing near High. Confirms return of Strength. ","")+
+WriteIf (dbar, "A High Volume Up Bar closing down in a uptrend shows Distribution. ","")+
+WriteIf (Hutbar, "Psuedo UpThrust. A Sign of Weakness. ","")+
+WriteIf (Hutcond, "A Down Bar closing down after a Pseudo Upthrust confirms weakness. ","")+
+WriteIf (Lvtbar1, "Test for supply in a uptrend. Sign of Strength. ","")+
+WriteIf (stdn2, "High volume upbar closing on the high indicates strength. ","")+
+WriteIf (Tcbar, "High volume Downbar after an upmove on high volume indicates weakness. ","")+
+WriteIf (ndbar, "No Demand. A sign of Weakness. ","")+
+WriteIf (nsbar, "No Supply. A sign of Strength. ","")+
+WriteIf (eftup, "Effort to Rise. Bullish sign ","")+
+WriteIf (eftdn, "Effort to Fall. Bearish sign ","")+
+WriteIf (eftupfl, "Effort to Move up has failed. Bearish sign ","")+
+WriteIf (stvol, "Stopping volume. Normally indicates end of bearishness is nearing. ","")+
+("\n Volume: ")+WriteIf(V>Vp2,EncodeColor(colorLime)+"Very High",WriteIf(V>Vp1,EncodeColor(colorLime)+" High",WriteIf(V>Vrg,EncodeColor(colorLime)+"Above Average",
+WriteIf(V<Vrg AND V>Vn1,EncodeColor(colorRed)+"Less than Average",WriteIf(V<Vn1,"Low","")))))+
+(EncodeColor(colorYellow)+" Spread: ")+WriteIf(rg >(arg*2),EncodeColor(colorLime)+" Wide",WriteIf(rg>arg,EncodeColor(colorLime)+" Above Average",EncodeColor(colorRed)+" Narrow"))+
+(EncodeColor(colorYellow)+" Close: ")+WriteIf(Vhcls,EncodeColor(colorLime)+"Very High",WriteIf(ucls,EncodeColor(colorLime)+"High",WriteIf(mcls,EncodeColor(colorYellow)+"Mid",
+WriteIf(dcls,EncodeColor(colorRed)+"Down","Very Low"))))+
+("\n Trend: ")+WriteIf(tls>0,EncodeColor(colorLime)+" Short Term-UP",EncodeColor(colorRed)+" Short Term-Down")+
+WriteIf(tlm>0,EncodeColor(colorLime)+" MID Term-UP",EncodeColor(colorRed)+" Mid Term-Down")+
+WriteIf(tll>0,EncodeColor(colorLime)+" Long Term-Up",EncodeColor(colorRed)+" Long term-Down"));
+_SECTION_END();
+//============================================================================================================================================================================================
+_SECTION_BEGIN("Exploration");
+
+Filter= utbar OR utcond2 OR utcond3 OR stdn OR stdn0 OR stdn1 OR stdn2;
+
+AddColumn(utcond3,"weekness coming in",1,colorWhite,IIf(utcond3,colorRed,colorWhite));
+AddColumn(utcond2,"sure weakness",1,colorWhite,IIf(utcond2,colorRed,colorWhite));
+AddColumn(utbar,"sure weakness",1,colorWhite,IIf(utbar,colorRed,colorWhite));
+AddColumn(stdn ,"Strength after long dtrend",1,colorWhite,IIf(stdn,colorLime,colorWhite));
+AddColumn(stdn0 ,"Strength after dtrend",1,colorWhite,IIf(stdn0,colorLime,colorWhite));
+AddColumn(stdn1 ,"Strength stronger",1,colorWhite,IIf(stdn1,colorLime,colorWhite));
+AddColumn(stdn2 ,"strength",1,colorWhite,IIf(stdn2,colorLime,colorWhite));
+_SECTION_END();
+//=====================================================================
+//background stock name (works only on Amibroker version 5.00 onwards.
+//=====================================================================
+_SECTION_BEGIN("Name");
+GfxSetOverlayMode(1);
+GfxSelectFont("Tahoma", Status("pxheight")/6 );
+GfxSetTextAlign( 6 );// center alignment
+//GfxSetTextColor( ColorRGB( 200, 200, 200 ) );
+GfxSetTextColor( ColorHSB( 42, 42, 42 ) );
+GfxSetBkMode(0); // transparent
+GfxTextOut( Name(), Status("pxwidth")/2, Status("pxheight")/12 );
+GfxSelectFont("Tahoma", Status("pxheight")/12 );
+GfxTextOut( "VPA", Status("pxwidth")/2, Status("pxheight")/3 );
+GfxSelectFont("Tahoma", Status("pxheight")/36 );
+GfxTextOut( "www.vpanalysis.blogspot.com", Status("pxwidth")/2, Status("pxheight")/2 );
+_SECTION_END();
+//==================================

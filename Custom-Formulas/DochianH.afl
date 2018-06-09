@@ -1,0 +1,7 @@
+
+field_value = ParamField("Field Value");
+period = Param("Period",20,3,350,1);
+Perc = Param("%",100,1,100,1)/100;
+prevBack = Param("Ref Bar",-1,-300,0,-1);
+DonchianH = Ref(HHV(field_value,period),prevBack)*Perc;
+Plot(DonchianH,"Donchian Upper", ParamColor( "Color", colorCycle ), ParamStyle("Style"));

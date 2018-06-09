@@ -1,0 +1,46 @@
+{//Option
+SetOption("NoDefaultColumns", True );
+}
+{//MKC =====================================
+	SET =	Foreign("SET","CLOSE");
+}
+{//RSI Condition
+	RSI_Period = Param("RSI PERIOD", 52, 1, 200, 1);
+	myRSI = RSI(RSI_Period);
+	RSI_high_Period = Param("RSI High Period",20,10,200,1);
+	RSI_PrevHigh = Ref( HHV(myRSI,RSI_high_Period),-1);
+	RSI_Since = BarsSince(RSI_PrevHigh < Ref(RSI_PrevHigh,-2));
+	RSI_BO = Cross(myRSI, RSI_PrevHigh);
+	RSI_1stBOMonth = RSI_BO AND RSI_Since > 1;
+	RSI_ROC = ROC(myRSI, RSI_high_Period);
+}
+{//RSI LEVELING
+	myRSI_TR = Param("RSI TR" , 1 , 0 , 4.99, 0.01);
+	lv45 = ( myRSI > 45 - myRSI_TR ) AND ( myRSI < 45 + myRSI_TR );
+	lv50 = ( myRSI > 50 - myRSI_TR ) AND ( myRSI < 50 + myRSI_TR );
+	lv55 = ( myRSI > 55 - myRSI_TR ) AND ( myRSI < 55 + myRSI_TR );
+	lv60 = ( myRSI > 60 - myRSI_TR ) AND ( myRSI < 60 + myRSI_TR );
+	lv65 = ( myRSI > 65 - myRSI_TR ) AND ( myRSI < 65 + myRSI_TR );
+	lv70 = ( myRSI > 70 - myRSI_TR ) AND ( myRSI < 70 + myRSI_TR );
+	RSI_LV =  lv45 OR lv50 OR lv55 OR lv50 OR lv65 OR lv70;
+}
+	rsiCon = RSI_BO OR ( RSI_LV AND myRSI >= 49.5);
+{//Liq
+	Million = Param("Million Value", 5, 1, 1000,1);
+   LiqCon = Avg* EMA(Volume, 20)  >  (1000000*Million);
+}
+{// Explorer
+	Filter = rsiCon AND LiqCon;
+	AddTextColumn( Name(), "Stock");
+	AddColumn(myRSI,"RSI");
+	AddColumn(RSI_PrevHigh,"RSI PrvHigh");
+	AddColumn(Ref(RSI_PrevHigh,-2),"RSI PrvHigh-2");
+	AddColumn(RSI_BO,"RSI-BO");
+	AddColumn(RSI_1stBOMonth,"RSI-1st-BO-Month");
+	AddColumn(RSI_ROC,"RSI ROC");
+	AddColumn(RSI_LV,"RSI@LV");
+	AddColumn(RSI_Since, "RSI Since");
+}
+{// Charting //
+	Plot( myRSI, "RSI55",IIf(myRSI > 55, colorGreen, colorRed),styleThick);
+}

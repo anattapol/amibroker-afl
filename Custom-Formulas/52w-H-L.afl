@@ -1,0 +1,29 @@
+function Months(m){return 252/(12/m);}
+IndexName = ParamStr("Index Name", "set"); // Name of Watch List
+period = months(Param("Period", 12, 1, 12, 1)); //Time period in Month
+IndexNumber = CategoryFind(IndexName, categoryWatchlist); //Get the WatchList by Name
+list = CategoryGetSymbols(categoryWatchlist, IndexNumber); //Get Stocks from Watch List
+//Init param counting
+newhighs = 0;
+newlows = 0;
+numStocks = 0;
+//Loop the stock in list
+for( i = 0; (sym = StrExtract(list, i)) != ""; i++ ){
+	//Get high / low from the stock
+	shigh = Foreign(sym, "H");
+	slow = Foreign(sym, "L");
+	shighNul = IIf(IsNull(shigh),1,0);
+	slowNul = IIf(IsNull(slow),1,0);
+	numStocks = numStocks + IIf(shighNul,0,1);
+	newhigh = IIf(shighNul, 0, IIf(shigh > Ref(HHV(shigh,period),-1),1,0));
+	newlow = IIf(slowNul, 0 ,IIf(slow < Ref(LLV(slow,period),-1),1,0));
+	newhighs = newhighs + newhigh;
+	newlows = newlows + newlow;
+	AddToComposite( newhigh, "~newHL", "H" );
+	AddToComposite( newlow, "~newHL", "L" );
+	AddToComposite( IIf(shighNul,0,1), "~newHL", "I" );
+}
+pctNewH = 100*newhighs/numStocks;
+pctNewL = 100*newlows/numStocks;
+//Plot(pctNewH, "% New High", ParamColor("Color",16), ParamStyle("Style",4));
+Graph0 = foreign( "~newHL", "H");

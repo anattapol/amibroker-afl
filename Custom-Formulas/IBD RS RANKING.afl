@@ -1,0 +1,18 @@
+_SECTION_BEGIN("IBD RS RANKING");
+//IBD RS RANKING
+//13 = Quaterly/ 130 = Haft-Year/ 260 = Yearly
+monthROC = (C - Ref(C, -4)) / Ref(C, -4) * 100;
+quaterROC = (C - Ref(C, -13)) / Ref(C, -13) * 100;
+halfYearROC = (C - Ref(C, -26)) / Ref(C, -26) * 100;
+YearROC = (C - Ref(C, -52)) / Ref(C, -52) * 100;
+RSW = (0.2*monthROC) + (0.3*quaterROC) + (0.2*halfYearROC) + (0.3*YearROC);
+Plot(RSW,"RANKING IBD" ,colorBrightGreen,styleLine) ;
+Plot(EMA(RSW,10),"10Ws AVG" ,colorRed,styleLine|styleDashed|styleNoLabel);
+
+BuyIBD=RSW>EMA(RSW,10) AND RSW>65;
+SellIBD=RSW>40 AND RSW<EMA(RSW,10);
+
+Filter=BuyIBD OR SellIBD;
+AddColumn( IIf(BuyIBD,RSW,IIf(SellIBD,RSW,0)) ,"RANKIBD",1.0,colorWhite,IIf(BuyIBD,colorDarkGreen,IIf(SellIBD,colorRed,colorWhite)));
+
+_SECTION_END();

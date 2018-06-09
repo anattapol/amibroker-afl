@@ -1,0 +1,4 @@
+color = IIf( C > MA( C, 200 ), colorgreen, colorred); //Replace the condition here with your condition
+SetChartBkColor( LastValue(color));
+Plot(C,"",colorBlack,styleCandle);
+Plot(MA(C,200),"",colorBlack,styleLine);

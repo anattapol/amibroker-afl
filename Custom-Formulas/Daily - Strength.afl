@@ -1,0 +1,168 @@
+{//Options =====================================
+	SetOption("InitialEquity",600000);
+	SetOption("MinShares",100);
+	RoundLotSize = 100;
+
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);
+
+	slippage = 0.01;
+
+	numStocks = 10;
+	SetOption( "MaxOpenPositions", numStocks );
+	
+	settradedelays( 1, 1, 1, 1 );
+	BuyPrice = Open+(Open*slippage);//Open Next day
+	SellPrice = Open-(Open*slippage);
+	//BuyPrice = Max(Low,EMA(Close,20));
+
+}
+
+{//MKC =====================================
+	SET =	Foreign("SET","CLOSE");
+}
+
+{//SIGNAL ==================================
+	{//Liquidity
+		Liq = MA(Volume*Avg,4) > 10000000;
+		VolMA = Volume > EMA(Volume,10);
+		VolUp = Volume > Ref(Volume,-1);
+	}
+	
+	{//Indicator
+		RSI_Strength = RSI(20) > 66.67;
+		ADX_Range = 20;
+		ADX_Value = ADX(ADX_Range);
+		Plus_DI = PDI(ADX_Range);
+		Minus_DI = MDI(ADX_Range);
+		ADX_UpTrend = Plus_DI  > Minus_DI;
+		ADX_Strength = IIf(ADX_Value >= 20,1,0);
+		ADX_Translation = IIF(ADX_UpTrend AND ADX_Strength,1,
+												IIF(ADX_UpTrend AND (ADX_Strength != 1),2,3)
+												);
+	}
+	
+	{//Strength
+		H_Year = HHV(High,252);
+		P_H_Year = Ref(H_Year,-1);
+		H_H_Year = HHV(High,130);
+		P_H_H_Year = Ref(H_H_Year,-1); 
+		hZone = H_Year*0.85;
+		rocStrength = ROC(Close,20) > ROC(Foreign("SET","Close"),20)
+					AND ROC(Close,130) > ROC(Foreign("SET","Close"),130)
+					AND ROC(Close,252) > ROC(Foreign("SET","Close"),252);
+		strength = rocStrength;
+		PctfarH_Year = (Close-H_Year)*100/H_Year;
+	}
+	
+	{//Breakout
+		BO_Month = Cross(C,Ref(HHV(H,20),-1));	
+		BO_H_H_Year = Cross(Close,P_H_H_Year);
+		BO_Year = Cross(Close,P_H_Year);
+	}
+	
+	{//4 Weeks Resting
+		H_Month = Ref(HHV(High,20),-1);
+		L4 = Ref(LLV(Low,20),-1);
+		RangeMonth = ((H_Month-L4)/L4)*100;
+	}
+	
+	{//4 Weeks Tight Close
+		maxC=Ref(HHV(C,20),-1);
+		minC=Ref(LLV(C,20),-1);
+		CSMonth=(maxC-minC)/minC*100;
+	}
+	
+	{//Price vs EMA
+		Mov0 = EMA(Close,10);
+		Mov1 = EMA(Close,20);
+		Mov2 = EMA(Close,50);
+		P_EMA10 = Cross(Close,Mov0);
+		P_EMA50 = Cross(Close,Mov2);
+		PercOfEMA10 = (Close-Mov0)*100/Mov0;
+		PercOfEMA50 = (Close-Mov2)*100/Mov2;
+	}
+	
+	{// Price action on Moving Average
+
+		//Price cross EMA
+		pAc1 = Low <= Mov0 AND Close > Mov0;
+		//In case that Low not completely touch MA AND Close going up
+		pAc2	=	Low <= Mov2*1.03; //Percent of low than come to EMA zone but not touch.
+		{// Mov Avg
+			MovTrend = IIf(Mov0 > Mov1 AND Mov1 > Mov2,1,0);
+		}
+		{// Keltner
+			Periods = 130;
+			Width = 5;
+
+			CenterLine = MA( Close, Periods );
+			KTop   = CenterLine + Width * ATR( Periods );
+			
+			P_KTOP = Close >= KTop*0.98;
+		}
+	}
+	
+	
+	{//Buy
+		buyCon1 = (pAc1 OR pAc2 );//Price
+		buyCon2 = 1;//Volume
+
+		BO = BO_Year OR BO_H_H_Year;
+		Buy = BO;
+	}
+	
+	{//Sell
+		sellCon1 = MACD() < 0;
+		Sell = 0;
+	}
+	
+	{//Filter
+		Filter = (Mov0 > Mov2) AND Liq;
+		AddColumn(PctfarH_Year,"% of YearHigh",1.2,colorDefault,IIf(PctfarH_Year>=0,colorPaleGreen,colorRose));
+		AddColumn(H_Year,"Year High");
+		AddColumn(RSI(14),"RSI14",1.2,colorDefault,
+			IIf(RSI(14)>=66.67,	colorPaleGreen
+				,IIf(RSI(14)<=33.33 ,colorPink
+					,colorWhite)
+				)
+			);
+		AddColumn(Strength,"Strength",1.2,colorDefault,IIf(Strength,colorTurquoise,colorWhite));
+		AddColumn(C >= hzone,"85%",1.2,C >= hzone,IIf(C >= hzone,colorTurquoise,colorWhite));
+		AddColumn(VolMA,"VolMA",1.2,colorDefault,IIf(VolMA,colorTurquoise,colorWhite));
+		AddColumn((pAc1 OR P_EMA10),"PB10w",1.2,colorDefault,IIf((pAc1 OR P_EMA10),colorPaleGreen,colorWhite));
+		AddColumn((pAc2 OR P_EMA50),"PB50w",1.2,colorDefault,IIf((pAc2 OR P_EMA50),colorPaleGreen,colorWhite));
+		AddColumn(BO_Month,"4W B.O",1.2,colorDefault,IIf(BO_Month,colorPaleGreen,colorRose));
+		AddColumn(BO_H_H_Year,"26W B.O",1.2,colorDefault,IIf(BO_H_H_Year,colorPaleGreen,colorRose));
+		AddColumn(BO_Year,"52W B.O",1.2,colorDefault,IIf(BO_Year,colorPaleGreen,colorRose));
+		AddColumn(ROC(Close,52),"ROC Year");
+		AddColumn(ROC(Close,10),"ROC 10Ws");
+		AddColumn(RangeMonth,"HL4WS"); //H-L 4 Weeks Spread
+		AddColumn(CSMonth,"C4WS"); //C 4 Weeks Spread
+		AddColumn(PercOfEMA10,"% of MA10",1.2,colorDefault,IIf(PercOfEMA10>0,colorPaleGreen,colorRose));
+		AddColumn(PercOfEMA50,"% of MA50",1.2,colorDefault,IIf(PercOfEMA50>0,colorPaleGreen,colorRose));
+		AddColumn(MovTrend,"MA Trend",1.2,colorDefault,IIf(MovTrend,colorPaleGreen,colorRose));
+	}
+}
+
+{//POSITION ==================================
+	/*Position Score*/
+		PositionScore = ROC(Close,5);
+	
+	/*Position Size*/
+	/*	PositionRisk = 1; // how much (in percent of equity) we risk in single position
+		TradeRisk = (BuyPrice - Moving)/BuyPrice; // trade risk in percent equals to max. loss percentage stop
+		PctSize = PositionRisk / TradeRisk;
+		PositionSize = -1*PctSize;
+	*/	
+		//SetPositionSize(5, spsPercentOfEquity);
+	//End Position Size
+	
+}
+
+{//STOP ==================================
+	ApplyStop(stopTypeLoss, stopModePercent, 10);
+	ApplyStop(stopTypeTrailing, stopModePercent, 25);
+	ApplyStop(stopTypeProfit, stopModePercent, 30);
+	ApplyStop(stopTypeNBar,stopModeBars,3);
+}

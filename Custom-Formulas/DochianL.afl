@@ -1,0 +1,6 @@
+
+field_value = ParamField("Field Value");
+period = Param("Period",20,3,350,1);
+
+DonchianL = Ref(LLV(field_value,period),-1);
+Plot(DonchianL,"Donchian Lower", ParamColor( "Color", colorCycle ), ParamStyle("Style"));

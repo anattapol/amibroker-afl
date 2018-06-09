@@ -1,0 +1,25 @@
+///// Chaloke.com Peak-Trough System 1.0 ///// 
+
+X=1; 
+Constant= 0.000; 
+
+UpperO= Ref(Peak(C,X),-1); 
+LowerO= Ref(Trough(C,X),-1); 
+Upper= UpperO*(1 + Constant ); 
+Lower= LowerO*(1 - Constant ); 
+
+Buy = Cross(C, Upper); 
+Sell= Cross(Lower,C); 
+
+Color=IIf(BarsSince(Buy)<BarsSince(Sell),ParamColor("Bullish",colorBrightGreen),ParamColor("Bearish",colorRed));
+Plot(C,"CDC Peak & Trought V.1.005",Color,64); 
+Plot(Zig(C,X),"",ParamColor("Zigzag",colorWhite),styleDashed); 
+Plot(Upper,"",ParamColor("Upper",colorBlue),styleDashed); 
+Plot(Lower,"",ParamColor("Lower",colorOrange),styleDashed); 
+PlotShapes(shapeUpArrow*Buy,ParamColor("UpArrow",10),0,L); 
+PlotShapes(shapeDownArrow*Sell,ParamColor("DownArrow",11),0,H);
+
+_SECTION_BEGIN("EMA");
+P = ParamField("Price field",-1);
+Periods = Param("Periods", 15, 2, 200, 1, 10 );
+Plot( EMA( P, Periods ), _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 

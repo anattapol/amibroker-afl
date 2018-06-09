@@ -1,0 +1,20 @@
+_SECTION_BEGIN("Profit/Loss % Change over Time");
+// PARAMETERS
+TtD_Param = ParamList("Period","Day to Date|Week to Date|Month to Date|Year to Date",0);
+
+// VARIABLES
+FDayMonth	= BarsSince(Month() != Ref(Month(),-1));
+FDayYear	= BarsSince(Year() != Ref(Year(),-1));
+TtD_Period	= IIf(TtD_Param	==	"Day to Date",1,
+		   IIf(TtD_Param	==	"Week to Date",DayOfWeek(),
+		   IIf(TtD_Param	==	"Month to Date",FDayMonth,
+		   IIf(TtD_Param	==	"Year to Date",FDayYear,0))));
+// FORMULA
+TtD_Change = 100 * (Close - Ref(Close, -TtD_Period) ) / Ref(Close, -TtD_Period);
+_SECTION_END();
+_SECTION_BEGIN("Explorer");
+// FILTER
+Filter = 1;
+// DISPLAY COLUMNS
+AddColumn(TtD_Change,"P/L % Change",1.2,IIf(TtD_Change>0,colorGreen,colorRed));
+_SECTION_END();

@@ -1,0 +1,18 @@
+percent=Param("percent",10,-20,20,1);
+Days=Param("Lookback Days",10,1,100,1);
+
+
+if(percent>0){
+Filter =((C-LLV(C,Days))*100)/C>percent  ;
+AddColumn(((C-LLV(C,Days))*100)/C,"Percentage change");
+AddColumn(LLV(C,Days),"Lowest Closing "+Days+" days back");
+
+}
+else if(percent<0){
+Filter =((C-HHV(C,Days))*100)/C<percent  ;
+AddColumn(((C-HHV(C,Days))*100)/C,"Percentage change");
+AddColumn(HHV(C,Days),"Highest Closing "+Days+" days back");
+}
+
+AddColumn(Volume,"Volume");
+AddColumn(Close,"Close");

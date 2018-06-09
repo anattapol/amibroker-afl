@@ -1,0 +1,15 @@
+_SECTION_BEGIN("Zone - RSI");
+//PlotOHLC(70,70,65,65,"",colorPaleBlue,styleCloud);
+//PlotOHLC(65,65,60,60,"",colorPaleTurquoise,styleCloud);
+//PlotOHLC(60,60,55,55,"",colorPaleGreen,styleCloud);
+//PlotOHLC(55,55,50,50,"",colorLightYellow,styleCloud);
+//PlotOHLC(50,50,45,45,"",colorRose,styleCloud );
+//PlotOHLC(45,45,40,40,"",colorPink,styleCloud );
+Plot(70,"",colorBlue,styleLine);
+Plot(65,"",colorGreen,styleLine);
+Plot(60,"",colorAqua,styleLine);
+Plot(55,"",colorBlack,styleLine);
+Plot(50,"",colorDarkYellow,styleLine);
+Plot(45,"",colorRed,styleLine);
+//Plot(66.67,"",colorBlue,styleLine);
+_SECTION_END();

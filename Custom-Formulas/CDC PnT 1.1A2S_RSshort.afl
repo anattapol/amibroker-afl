@@ -1,0 +1,16 @@
+{//IBD RS Ranking
+		tr_Month =  ( (C - Ref(C, -10)) / Ref(C, -10) * 100);
+		tr_Quater = ( (C - Ref(C, -65)) / Ref(C, -65) * 100);
+		tr_HalfYear =  ( (C - Ref(C, -130)) / Ref(C, -130) * 100);
+		tr_Year =  ( (C - Ref(C, -252)) / Ref(C, -252) * 100);
+		RS_Long = (0.2*tr_Quater) + (0.3*tr_HalfYear ) + (0.5*tr_Year);
+		RS_Medium = (0.4*tr_Quater) + (0.3*tr_HalfYear ) + (0.3*tr_Year);
+		RSMW = Param("RSMW",0.1,0.1,0.6,0.1);
+		RSMQ = (1-RSMW)/2;
+		RSMH = (1-RSMW)/4;
+		RSMY = (1-RSMW)/4;
+		RS_Short = (RSMW*tr_Month)+(RSMQ *tr_Quater) + (RSMH*tr_HalfYear ) + (RSMY*tr_Year);
+		RS_Min = Param("RS_min",50,50,70,10);
+		RS_Max = Param("RS_max",180,100,200,20);
+		Plot(IIf(RS_Short <= RS_Max AND RS_Short >= RS_Min,1,0),"RS_Short" ,colorBlue,styleArea|styleNoLabel);
+}

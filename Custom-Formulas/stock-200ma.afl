@@ -1,0 +1,24 @@
+IndexName = ParamStr("Index Name", "set"); // Name of Watch List
+period = Param("Period", 200, 5, 300, 1); //Time period in Month
+IndexNumber = CategoryFind(IndexName, categoryWatchlist); //Get the WatchList by Name
+list = CategoryGetSymbols(categoryWatchlist, IndexNumber); //Get Stocks from Watch List
+//Init param counting
+abvMA = 0;
+blowMA = 0;
+numStocks = 0;
+//Loop the stock in list
+for( i = 0; (sym = StrExtract(list, i)) != ""; i++ ){
+	//Get high / low from the stock
+	symC = Foreign(sym, "C");
+	symNul = IIf(IsNull(symC),1,0);
+	symMA = IIf(symNul,0,MA(symC,period));
+	symUp = IIf(symNul,0, IIf(symC > symMA,1,0));
+	numStocks = numStocks + IIf(symNul,0,1); // Count number of stocks in WatchList
+	abvMA = abvMA + IIf(symUp, 1, 0);
+}
+pctAbvMA = 100*abvMA/numStocks;
+//Filter = C > MA(C,period);
+//Plot(hilodiff, _DEFAULT_NAME() + " – " + IndexName, ParamColor("Color",16), ParamStyle("Style",4));
+//Plot(newhighs, "% New High", ParamColor("Color",16), ParamStyle("Style",4));
+Plot(pctAbvMA, "% above "+period+"MA", ParamColor("Color",16), ParamStyle("Style",4));
+//Plot(a, "pctH", ParamColor("Color",16), ParamStyle("Style",4));

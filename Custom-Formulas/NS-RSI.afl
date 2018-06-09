@@ -1,0 +1,24 @@
+//************************************************
+// Number of Stock that RSI Greater than X value
+//************************************************
+period = Param("RSI-Period", 14, 5, 60, 1);
+bull = 66.67;
+bear = 33.33;
+{//New High - New Low
+	nul = IsNull(Close);
+	aRSI = RSIa(Close, period);
+	rsiBull = aRSI >= bull;
+	rsiBear = aRSI <= bear;
+}
+{//Add to Composite
+	AddToComposite( rsiBull, "~NS_RSI", "H" );
+	AddToComposite( rsiBear, "~NS_RSI", "L" );
+	AddToComposite( IIf(IIf(nul,0,Close) > 0, 1,0), "~NS_RSI", "I"); //Counting Number of Stocks
+}
+{//Calculate in %
+	pctRsiBull = 100*foreign( "~NS_RSI", "H")/foreign( "~NS_RSI", "I");
+}
+{// Plotting
+	//Graph0 = pctAbvMA;
+	Plot(pctRsiBull, "% RSI "+period+" GTR "+bull, ParamColor("Color",16), ParamStyle("Style",4));
+}

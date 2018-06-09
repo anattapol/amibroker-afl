@@ -1,0 +1,6 @@
+Filter = 1;
+nextHHV = Ref(HHV(C,5),5);
+Buy = IIf(C <= nextHHV, 1, 0);
+AddColumn(C,"Close");
+AddColumn(nextHHV,"NextHHV");
+AddColumn(Buy,"Buy");

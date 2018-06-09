@@ -1,0 +1,36 @@
+{//Init Options =====================================
+	SetOption("InitialEquity",900000);
+	SetOption("MinShares",100);
+	SetOption("NoDefaultColumns", True );
+	numStocks = 100;
+	SetOption( "MaxOpenPositions", numStocks );
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);	
+	settradedelays( 1, 0, 1, 1 ); // Buy - Sell on Next Day
+	RoundLotSize = 100;
+	slippage = 0.03;
+	BuyPrice = Open+(Open*slippage);
+	SellPrice = Open-(Open*slippage);
+}
+{//Liquidity
+	liq = EMA(Close, 10) * MA(Volume,10) > 10000000;
+}
+{//Dochian Break Out
+	hhvRange = Optimize("hhv Range", 260, 200, 520, 20);
+	resistRange = Optimize("Short Range", 50, 10, 100, 10);
+	HHVLongRange = HHV(Close, hhvRange);
+	resistHHV = Ref(ROC(HHVLongRange,resistRange),-1) == 0;
+	
+	BOLong = Cross(Close, Ref( HHVLongRange, -1));
+	F_BOLong = BOLong AND resistHHV;
+}
+{//Buy Sell
+	Buy = F_BOLong AND liq;
+	Sell = 0;
+	PositionSize = -1;
+}
+{//Apply Stop
+	ndayStop = Optimize("nday Stop",5,3,20,1);
+	ApplyStop(stopTypeNBar, stopModeBars, ndayStop);
+	ApplyStop(stopTypeLoss, stopModePercent,ndayStop);
+}

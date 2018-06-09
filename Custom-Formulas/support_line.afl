@@ -1,0 +1,23 @@
+// define reusable function
+function SupResLevels( bars, colorUp, ColorDn )
+{
+   bi = BarIndex();
+   lvbi = LastValue( bi );
+
+   // return HHV value only for bars starting from the bar where HHV level was established
+   hv = IIf( bi >= lvbi - LastValue( HHVBars( High, bars ) ), LastValue( HHV( High, bars ) ), Null );
+
+   // the same approach for LLV
+   lv = IIf( bi >= lvbi - LastValue( LLVBars( Low, bars ) ), LastValue( LLV( Low, bars ) ), Null );
+
+   // plot levels
+   Plot( hv, "hv", colorUp, styleDashed );
+   Plot( lv, "lv", ColorDn, styleDashed );
+}
+
+// price plot
+Plot( Close, "Close", colorDefault, styleBar );
+
+// call function with various parameters
+SupResLevels( 10, colorGreen, colorRed );
+SupResLevels( 50, colorGreen, colorRed );

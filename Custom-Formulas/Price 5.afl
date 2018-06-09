@@ -1,0 +1,16 @@
+_SECTION_BEGIN("Price-Bar");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+PreviousBar = Ref(C,-1);
+Color=IIf(C<=PreviousBar,ParamColor("Bearish",colorRed),ParamColor("Bullish",colorBlack));
+Plot( C, "Close", Color, styleBar | styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+
+_SECTION_BEGIN("Volume");
+Plot( Volume, _DEFAULT_NAME(), ParamColor("Color", colorBlueGrey ), ParamStyle( "Style", styleHistogram | styleOwnScale | styleThick, maskHistogram  ) );
+_SECTION_END();
+
+_SECTION_BEGIN("Volume At Price");
+PlotVAPOverlay( Param("Lines", 300, 100, 1000, 1 ), Param("Width", 5, 1, 100, 1 ), ParamColor("Color", colorCycle ), ParamToggle("Side", "Left|Right" ) | 4*ParamToggle("Z-order", "On top|Behind", 1 ) );
+ 
+_SECTION_END();

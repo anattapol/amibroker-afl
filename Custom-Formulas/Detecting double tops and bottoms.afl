@@ -1,0 +1,46 @@
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", ParamColor("Color", colorBlack ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+
+_SECTION_BEGIN("Detecting double tops and bottoms");
+/* Detecting double tops and bottoms (come into view, by Isfandi)*/ 
+percdiff = 5; /* peak detection threshold */ 
+fwdcheck = 5; /* forward validity check */ 
+mindistance = 10; 
+validdiff = percdiff/400; 
+
+PK= Peak( H, percdiff, 1 ) == High; 
+TR= Trough( L, percdiff, 1 ) == Low; 
+
+
+x = Cum( 1 ); 
+XPK1 = ValueWhen( PK, x, 1 ); 
+XPK2 = ValueWhen( PK, x, 2 ); 
+xTR1 = ValueWhen( Tr, x, 1 ); 
+xTr2 = ValueWhen( Tr, x, 2 ); 
+
+peakdiff = ValueWhen( PK, H, 1 )/ValueWhen( PK, H, 2 ); 
+Troughdiff=ValueWhen( tr, L, 1 )/ValueWhen( tr, L, 2 ); 
+
+doubletop = PK AND abs( peakdiff - 1 ) < validdiff AND (Xpk1 -Xpk2)>mindistance AND High > HHV( Ref( H, fwdcheck ), fwdcheck - 1 ); 
+doubleBot=tr AND abs( troughdiff - 1 ) < validdiff AND (Xtr1 -Xtr2)>mindistance AND Low < LLV( Ref( L, fwdcheck ), fwdcheck - 1 ); 
+
+Buy = doublebot; 
+Sell = doubletop; 
+for( i = 0; i < BarCount; i++ ) 
+{ 
+if( Buy[i] ) PlotText( "BOT " , i, L[ i ],colorBlue ); 
+if( Sell[i] ) PlotText( "TOP" , i, H[ i ], colorRed ); 
+} 
+
+
+WriteIf( Highest( doubletop ) == 1, "AmiBroker has detected some possible 
+double top patterns for " + Name() + "\nLook for green arrows on the price 
+chart.", "There are no double top patterns for " + Name() ); 
+
+WriteIf(Lowest( doublebot)==1,"AmiBroker has detected some possible double 
+bottom patterns for " + Name() + "\nLook for red arrows on the price 
+chart.", "There are no double bottom patterns for " + Name() ); 
+_SECTION_END();

@@ -1,0 +1,19 @@
+period = Param("Period", 260, 20, 520, 5);
+{//New High - New Low
+	nul = IsNull(Close);
+	ExpMovAvg = EMA(Close, period);
+	abvMA = IIf(nul,0,Close) > ExpMovAvg;
+	belMA = IIf(nul,0,Close) <= ExpMovAvg;
+}
+{//Add to Composite
+	AddToComposite( IIf(nul,0,abvMA), "~AbvBelMA", "H" );
+	AddToComposite( IIf(nul,0,belMA), "~AbvBelMA", "L" );
+	AddToComposite( IIf(IIf(nul,0,Close) > 0, 1,0), "~AbvBelMA", "I"); //Counting Number of Stocks
+}
+{//Calculate in %
+	pctAbvMA = 100*foreign( "~AbvBelMA", "H")/foreign( "~AbvBelMA", "I");
+}
+{// Plotting
+	//Graph0 = pctAbvMA;
+	Plot(pctAbvMA, "% Above "+period+" EMA", ParamColor("Color",16), ParamStyle("Style",4));
+}

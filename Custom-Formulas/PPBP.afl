@@ -1,0 +1,42 @@
+{//Options =====================================
+	SetOption("InitialEquity",600000);
+	SetOption("MinShares",1);
+	SetOption("NoDefaultColumns", True );
+	numStocks = 100;
+	SetOption( "MaxOpenPositions", numStocks );
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);	
+	settradedelays( 1, 1, 1, 1 );
+	//RoundLotSize = 100;
+	slippage = 0.03;
+	BuyPrice = Open+(Open*slippage);//Open Next day
+	SellPrice = Open-(Open*slippage);
+	//BuyPrice = Max(Low,EMA(Close,20));
+}
+
+{ //Moving Average
+	S_MA = EMA(Close, Param("Short MA", 10, 5, 35,1));
+	L_MA = EMA(Close, Param("Longs MA", 50, 35, 100,1));
+	MA_UP = S_MA > L_MA;
+	C_GTR_S_MA = Close > S_MA;
+	MA_Cond = MA_UP AND C_GTR_S_MA;
+}
+{ // Price Pattern
+	Bull_Day = Close > Open;
+	Bear_Day = Open > Close;
+	Just_Start = Close <= S_MA*1.05;
+}
+{// Volume
+	V_Bear_Day = IIf(Bear_Day, Volume, 0);
+	V_Cond = Volume >= HHV(V_Bear_Day, 10);
+}
+{// Buy & Sell
+	Buy = V_Cond AND MA_Cond AND Bull_Day AND Just_Start;
+	Sell = Cross(S_MA,Close);
+}
+{// Filter
+	Filter = V_Cond AND MA_Cond AND Bull_Day AND Just_Start;
+}
+{// Position Size
+PositionSize = 100;
+}

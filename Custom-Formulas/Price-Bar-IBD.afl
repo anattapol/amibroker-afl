@@ -1,0 +1,5 @@
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+PreviousBar = Ref(C,-1);
+Color=IIf(C<=PreviousBar,ParamColor("Bearish",colorRed),ParamColor("Bullish",colorBlack));
+Plot( C, "Close", Color, styleBar | styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 

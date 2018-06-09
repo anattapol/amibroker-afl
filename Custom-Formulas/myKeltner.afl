@@ -1,0 +1,63 @@
+{//Option
+	SetOption("NoDefaultColumns", True );
+	P = ParamField("Price field",-1);
+	Periods = Param("Periods", 180, 2, 300, 1 );
+}
+{//RSI
+	rsiPeriod = Param("RSI Period", 55, 7,100,1);
+	myRSI = RSIa(P, rsiPeriod);
+}
+{// Keltner
+	Width = Param("Width", 2, 0, 10, 0.05 );
+	Width2 = Param("Width2", 5, 0, 10, 0.05 );
+	
+	CenterLine = MA( P, Periods );
+	KTop   = CenterLine + Width * ATR( Periods );
+	KSuper   = CenterLine + Width2 * ATR( Periods );
+	KGoUp =  Ref(KTop,-1) < KTop;
+	KGoDown = Ref(KTop,-1) >= KTop;
+	PriceColor =  IIf( P >= KSuper, colorPink,
+							IIf( P >= KTop AND KGoUp , colorGreen,
+								IIf( P >= KTop AND KGoDown, colorGold,
+									IIf( P >= CenterLine AND P < KTop AND KGoUp, colorBlue, colorRed)
+								)
+							)
+						);
+	HitKSuper = Cross(P, KSuper) 
+							OR ( L<= KSuper AND H > KSuper);
+	PriceColor = IIf( HitKSuper, colorBlack, PriceColor);
+	PriceColor = IIf( myRSI >= 54.55, IIf(PriceColor == colorPink, colorBrightGreen, PriceColor), PriceColor);
+	pctC2K = (Close - KTop)/KTop* 100;
+	Plot( C, "Close", PriceColor, styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+//	Plot(KSuper, "K Super",colorBlack);
+//	Plot(KTop, "K Top",colorGrey40);
+}
+{//EMA
+EMAPeriods = Param("EMA Periods", 18, 2, 300, 1, 10 );
+movAvg = EMA( P, EMAPeriods );
+EMAColor = IIf( Ref(movAvg, -1) > movAvg, colorRed, colorGold);
+Plot( movAvg,"EMA Avg", EMAColor, styleLine | styleThick ); 
+}
+{// Liquidity
+	liq = MA(Volume,10) * MA(Avg,10) > 10000000;
+}
+{// Filter
+	Filter = (Ref(PriceColor,-1) != colorPink AND PriceColor == colorPink) OR 
+					(Ref(PriceColor,-1) != colorBrightGreen AND PriceColor == colorBrightGreen) OR
+					(PriceColor == colorBlack);
+	AddTextColumn( Name(), "Stock");
+	AddColumn(pctC2K,"% to Keltner");
+}
+{//Back Testing Option
+	SetOption("InitialEquity", 100000);
+	SetOption("MaxOpenPositions", 100 );
+	PositionSize = -2; // invest 2% of portfolio equity in single trade
+	priceRange = C > 0.8;
+}
+{// Buy-Sell
+	Buy = (PriceColor == colorBrightGreen) AND (Ref(PriceColor,-1) != colorBrightGreen) AND liq;
+	Sell = (PriceColor != colorBrightGreen) AND (Ref(PriceColor,-1) == colorBrightGreen);
+}
+{//Apply Stop
+	//ApplyStop(stopTypeNBar, stopModeBars, 5);
+}

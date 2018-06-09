@@ -1,0 +1,60 @@
+//Amibroker 52&26-Week High Low By Agapol Chamnanpanich
+//Set up Chart
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", ParamColor("Color", colorDefault ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+//Set up Variable
+_SECTION_BEGIN("52&26-Week High Low System");
+Hclose=HHV(H,252);
+Lclose= LLV(L,252);
+cal52 = (C-HHV(H,252))/(HHV(H,252))*100; 
+cal26 = (C-HHV(H,126))/(HHV(H,126))*100; 
+H1close=HHV(H,126);
+L1close= LLV(L,126);
+//Display on Left Chart
+Sha1 = EncodeColor(colorGreen) + "52-Week High = " + Hclose + "\n";
+Sha2 = EncodeColor(colorRed) + "52-Week Low = " + Lclose + "\n";
+Sha3 = EncodeColor(colorBlue) + "Off 52-Week High(%) = " + Cal52 + "\n";
+Sha4 = EncodeColor(colorGreen) + "26-Week High = " + H1close + "\n";
+Sha5 = EncodeColor(colorRed) + "26-Week Low = " + L1close + "\n";
+Sha6 = EncodeColor(colorBlue) + "Off 26-Week High(%) = " + Cal26 + "\n";
+_N(Title = StrFormat("{{NAME}} ({{INTERVAL}}), {{DATE}} ; {{OHLCX}}, V=%1.0f\n {{VALUES}}\n\n", V) + Sha1 + Sha2 + sha3 + sha4 + sha5 + Sha6);
+_SECTION_END();
+_SECTION_BEGIN("MA");
+P = ParamField("Price field",-1);
+Periods = Param("Periods", 10, 2, 300, 1, 10 );
+Plot( MA( P, Periods ), _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 
+_SECTION_END();
+_SECTION_BEGIN("MA1");
+P = ParamField("Price field",-1);
+Periods = Param("Periods", 40, 2, 300, 1, 10 );
+Plot( MA( P, Periods ), _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 
+_SECTION_END();
+//Condition
+HI = Close > Ref(HHV(High,260),-1);
+LW = Close < Ref(LLV(Low,260),-1);
+//52 Week High Low
+High52 = HHV(High,250);
+Low52 = LLV(Low,250);
+Filter = 1;
+//26 Week High Low
+High26 = HHV(High,125);
+Low26 = LLV(Low,125);
+Filter = 1;
+//Off-52 Week High %
+Cal1 = (C-High52)/(High52)*100;
+//Off-26 Week High %
+Cal2 = (C-High26)/(High26)*100;
+//Diff of 52-26 Weeks
+Cal3 = High52-High26;
+//Display Column
+AddColumn(C,"Close",1.2,IIf(C>Ref(C,-1),colorGreen,colorRed));
+AddColumn(High52,"High-52W",1.2,IIf(High52>Low52,colorGreen,colorRed));
+AddColumn(Low52,"Low-52W",1.2,IIf(Low52<High52,colorred,colorGreen));
+AddColumn(Cal1,"%52W-H",1.2,colorDefault,IIf(Cal1<0,colorRed,IIf(Cal1==0,colorBrightGreen,colorDefault)));
+AddColumn(High26,"High-26W",1.2,IIf(High26>Low26,colorGreen,colorRed));
+AddColumn(Low26,"Low-26W",1.2,IIf(Low26<High26,colorred,colorGreen));
+AddColumn(Cal2,"%26W-H",1.2,colorDefault,IIf(Cal2<0,colorRed,IIf(Cal2==0,colorBrightGreen,colorDefault)));
+AddColumn(Cal3,"52W-26W",1.2,colorDefault,IIf(Cal3==0,colorYellow,colorRed));

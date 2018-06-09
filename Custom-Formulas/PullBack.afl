@@ -1,0 +1,156 @@
+{//Options =====================================
+	SetOption("InitialEquity",600000);
+	SetOption("MinShares",100);
+	RoundLotSize = 100;
+
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);
+
+	slippage = 0.01;
+
+	numStocks = 10;
+	SetOption( "MaxOpenPositions", numStocks );
+	
+	settradedelays( 1, 1, 1, 1 );
+	BuyPrice = Open+(Open*slippage);//Open Next day
+	SellPrice = Open-(Open*slippage);
+	//BuyPrice = Max(Low,EMA(Close,20));
+
+}
+
+{//MKC =====================================
+	SET =	Foreign("SET","CLOSE");
+}
+
+{//SIGNAL ==================================
+	{//Liquidity
+		Liq = MA(Volume*Avg,20) > 10000000;
+	}
+	
+	{//Indicator
+		Indy = RSI(55) > 50;
+		RSI_BO = RSI(55) >= Ref(HHV(RSI(55),55),-1);
+		ADX_Range = 20;
+		ADX_Value = ADX(ADX_Range);
+		Plus_DI = PDI(ADX_Range);
+		Minus_DI = MDI(ADX_Range);
+		ADX_UpTrend = Plus_DI  > Minus_DI;
+		ADX_Strength = IIf(ADX_Value >= 20,1,0);
+		ADX_Translation = IIF(ADX_UpTrend AND ADX_Strength,1,
+												IIF(ADX_UpTrend AND (ADX_Strength != 1),2,3)
+												);
+	}
+	
+	{//Strength
+		H260 = HHV(High,252);
+		P_H260 = Ref(H260,-1);
+		BO_260 = Cross(Close,P_H260);
+		H130 = HHV(High,130);
+		P_H130 = Ref(H130,-1);
+		BO_130 = Cross(Close,P_H130);
+		hZone = H260*0.85;
+		rocStrength = ROC(Close,10) > ROC(Foreign("SET","Close"),10)
+					AND ROC(Close,20) > ROC(Foreign("SET","Close"),20)
+					AND ROC(Close,50) > ROC(Foreign("SET","Close"),50)
+					AND ROC(Close,260) > ROC(Foreign("SET","Close"),260);
+		strength = Close >= hZone AND rocStrength;
+	}
+	
+	{//Breakout
+		ShortPeriod = HHV(H,10);
+		BO_SP = Cross(C,Ref(ShortPeriod,-1));	
+	}
+	
+	{// Price action on Moving Average
+		Mov0 = EMA(Close,10);
+		Mov1 = EMA(Close,20);
+		Mov2 = EMA(Close,50);
+		//Price cross EMA
+		pAc1 = Low <= Mov1 AND Close > Mov1;
+		//In case that Low not completely touch MA AND Close going up
+		pAc2	=	Low >= Mov1 
+					AND Low <= EMA(Close,20)*1.015; //Percent of low than come to EMA zone but not touch.
+		P_EMA50 = Close <= EMA(Close,50)*1.03 AND Close >= EMA(Close,50);
+		{// Mov Avg
+			MovTrend = IIf(Mov0 > Mov1 AND Mov1 > Mov2,1,0);
+		}
+		{// Keltner
+			Periods = 130;
+			Width = 5;
+
+			CenterLine = MA( Close, Periods );
+			KTop   = CenterLine + Width * ATR( Periods );
+			
+			P_KTOP = Close >= KTop*0.98;
+		}
+	}
+	
+	
+	{//Buy
+		buyCon1 = (pAc1 OR pAc2 );//Price
+		buyCon2 = 1;//Volume
+		buyCon3 = Indy;//Indicator
+		Buy = buyCon1;
+	}
+	
+	{//Sell
+		sellCon1 = MACD() < 0;
+		Sell = 0;
+	}
+	
+	{//Filter
+		Filter = ((RSI_BO ) OR (buyCon1) OR BO_260) AND Liq;
+		AddColumn((Close-Mov1)*100/Mov1,"% of MA20",1.2,colorDefault,IIf((Close-Mov1)*100/Mov1>0,colorPaleGreen,colorRose));
+		AddColumn((Close-Mov2)*100/Mov2,"% of MA50",1.2,colorDefault,IIf((Close-Mov2)*100/Mov2>0,colorPaleGreen,colorRose));
+		AddColumn((Close-H260)*100/H260,"% of YearHigh",1.2,colorDefault,IIf((Close-H260)*100/H260>=0,colorPaleGreen,colorRose));
+		AddColumn(H260,"Year High");
+		AddColumn(RSI(55),"RSI55",1.2,colorDefault,
+			IIf(RSI(55)>=55 AND RSI(55)<=60,	colorPaleGreen
+				,IIf(RSI(55)>=60 AND RSI(55)<=65,colorTurquoise
+					,IIf(RSI(55)>=65 AND RSI(55)<=70,colorPaleBlue
+						,IIf(RSI(55)>=50 AND RSI(55)<=55,colorLightYellow
+							,IIf(RSI(55)>=45 AND RSI(55)<=50,colorRose
+								,IIf(RSI(55)>=40 AND RSI(55)<=45,colorPink
+								,colorWhite)
+								)
+							)
+						)
+					)
+				)
+			);
+		AddColumn(RSI_BO,"RSI BO",1.2,colorDefault,IIf(RSI_BO,colorPaleGreen,colorRose));
+		AddColumn(Strength,"Strength",1.2,colorDefault,IIf(Strength,colorTurquoise,colorWhite));
+		AddColumn(C >= hzone,"85% of High260");
+		AddColumn(Buy,"PB EMA20",1.2,IIf(Buy,colorPaleGreen,colorBlack));
+		AddColumn(P_EMA50,"PB EMA50",1.2,IIf(P_EMA50,colorPaleGreen,colorBlack));
+		AddColumn((Close-KTop)*100/KTop,"% of Keltner130-5",1.2,colorDefault,IIf((Close-KTop)*100/KTop>=0,colorPaleGreen,colorRose));
+		AddColumn(BO_SP,"2W B.O",1.2,colorDefault,IIf(BO_SP,colorPaleGreen,colorRose));
+		AddColumn(BO_130,"26W B.O",1.2,colorDefault,IIf(BO_130,colorPaleGreen,colorRose));
+		AddColumn(BO_260,"52W B.O",1.2,colorDefault,IIf(BO_260,colorPaleGreen,colorRose));
+		AddColumn(ROC(Close,260),"ROC Year");
+		AddColumn(ROC(Close,10),"ROC 2Ws");
+		AddColumn(MovTrend,"MA Trend",1.2,colorDefault,IIf(MovTrend,colorPaleGreen,colorRose));
+	}
+}
+
+{//POSITION ==================================
+	/*Position Score*/
+		PositionScore = ROC(Close,5);
+	
+	/*Position Size*/
+	/*	PositionRisk = 1; // how much (in percent of equity) we risk in single position
+		TradeRisk = (BuyPrice - Moving)/BuyPrice; // trade risk in percent equals to max. loss percentage stop
+		PctSize = PositionRisk / TradeRisk;
+		PositionSize = -1*PctSize;
+	*/	
+		//SetPositionSize(5, spsPercentOfEquity);
+	//End Position Size
+	
+}
+
+{//STOP ==================================
+	ApplyStop(stopTypeLoss, stopModePercent, 10);
+	ApplyStop(stopTypeTrailing, stopModePercent, 25);
+	ApplyStop(stopTypeProfit, stopModePercent, 30);
+	ApplyStop(stopTypeNBar,stopModeBars,3);
+}

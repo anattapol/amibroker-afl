@@ -1,0 +1,10 @@
+{// ROC vs SET Ranking
+	Month_ROC = ROC(Close,4) - ROC(Foreign("SET","Close"),4);
+	Quarter_ROC = ROC(Close,12) - ROC(Foreign("SET","Close"),12);
+	HY_ROC = ROC(Close,26) - ROC(Foreign("SET","Close"),26);
+	Y_ROC = ROC(Close,26) - ROC(Foreign("SET","Close"),26);
+	Short_RANK = 0.5*Month_ROC + 0.3*Quarter_ROC + 0.15*HY_ROC + 0.05*HY_ROC;
+	Medium_RANK = 0.25*Month_ROC + 0.25*Quarter_ROC + 0.25*HY_ROC + 0.25*HY_ROC;
+	Long_RANK = 0.05*Month_ROC + 0.15*Quarter_ROC + 0.3*HY_ROC + 0.5*HY_ROC;
+	}
+	Plot( Short_RANK, _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 

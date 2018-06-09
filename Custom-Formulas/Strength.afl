@@ -1,0 +1,6 @@
+TimeFrameSet( inWeekly ); 
+field_value = ParamField("Field Value");
+Perc = Param("%",100,1,100,1)/100;
+YtdHigh = Ref(HHV(field_value,52),-1)*Perc;
+TimeFrameRestore(); 
+Plot(YtdHigh,"YTD High", ParamColor( "Color", colorCycle ), ParamStyle("Style"));

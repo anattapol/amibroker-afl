@@ -1,0 +1,438 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*Candle Stick Chart For Stock*/
+
+/*Body Colors*/
+Whitebody=C>=O;
+Blackbody=O>C;
+Realbody =abs(O-C);
+Realbodypercent = (Realbody/Ref(C, -1))*100;
+Range = H-L;
+Percentdiff =((C - Ref(C, -1))/Ref(C, -1))*100;
+Tiny = 0.25;
+Small = 1;
+Medium = 3;
+Large = 5;
+
+
+/*Body Size*/
+Smallbody = Realbodypercent <= Small;
+Mediumbody =Small < Realbodypercent < Medium ;
+Largebody = Medium < Realbodypercent < Large ;
+Extralargebody = Realbodypercent >= Large;
+
+
+
+/*Shadows*/
+Lowershadow = abs(Min(O,C) - L);
+Lowershadowpercent = ((abs(Min(O,C) - L))/Ref(C, -1))*100;
+Uppershadow =abs( H - Max(O,C));
+Uppershadowpercent = ((abs( H - Max(O,C)))/Ref(C, -1))*100;
+
+Lowershadow1 = Min(Ref(O, -1) ,C) - Min(L,Ref(L,-1));
+Uppershadow1 = Max(H, Ref(H,-1)) - Max(Ref(O, -1),C);
+Range1= Max(H, Ref(H,-1))-Min(L,Ref(L,-1));
+Realbody1 =abs(C-Ref(O,-1));
+
+Min1 = Min( L, Ref(L,-1));
+Max1 = Max(H, Ref(H,-1));
+Lowershadow2 = Min(Ref(O, -2) ,C) - Min(Min1, Ref(L,-2));
+Uppershadow2 = Max(Max1,Ref(H,-2)) - Max(Ref(O, -2),C);
+
+Range2= Max(Max1,Ref(H,-2))-Min(Min1,Ref(L,-2));
+Realbody2 =abs(C-Ref(O,-2));
+Smalluppershadow= Uppershadowpercent <= Tiny;
+Smalllowershadow= Lowershadowpercent <= Tiny;
+
+Largeuppershadow= Uppershadowpercent >= Small;
+Largelowershadow= Lowershadowpercent >=Small;
+
+
+/*Gaps*/
+Upgappoint = O - Ref(C,-1);
+Upgap=  O >= (Ref(C, -1) + Ref(C, -1)*0.005);
+Downgap= O <= (Ref(C, -1) - Ref(C, -1)*0.005);
+
+/*Candlestick Chart Of Bullish Sentiment Start */
+
+Abandonedbabybullish=Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(High,-1)<Ref(Low,-2) AND Low>Ref(High,-1) AND Close>=Open*1.01 AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Abovethestomach= LLV(Low, 3)==Ref(Low,-1) AND Ref(C,-1) < Ref(O, -1) AND O > ((Ref(H,-1)+Ref(L,-1))/2) AND C >Ref(H,-1) AND C>O AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Beltholdbullish= LLV(Low, 5)==Low AND O> Ref(L,-1) AND  C> O AND O<=L*0.99 AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Breakawaybullish = HHV(High,3)==High AND C >O AND Ref(LLV(Low, 5),-3)==Ref(L,-3) AND Ref(O,-3) < Ref(L, -3) AND Ref(L,-1) < Ref(L,-2) < Ref(L,-3) AND LLV(Low, 5)==Min(Low, Ref(Low,-1)) ;
+
+Engulfingbullish=Open<Ref(Low,-1) AND Close>Ref(High,-1) AND Close>=Open*1.01 AND LLV(Low, 5)==Low AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Hammer=Open>=(High-((High-Low)*.25)) AND Close>=(High-((High-Low)*.25)) AND LLV(Low,5)==Low AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Matchinghigh=HHV(High,8)==HHV(High,2) AND Ref(Close,-1)>=Ref(Open,-1)*.99 AND abs(High-Ref(High,-1))<=High*.0025 AND Open> Close AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Morningstar=Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(Open,-1)<=Ref(Close,-2) AND Ref(Close,-1)<=Ref(Close,-2) AND Close>Ref(Close,-2) AND Close>=Open*1.01 AND LLV(Low,5)==Low AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Piercingline=Ref(Close,-1)<=Ref(Open,-1)*.99 AND Open<Ref(Low,-1) AND Close>=(Close+((Open-Close)*.5)) AND  LLV(Low,5)==Low  AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Threestarsinthesouth=LLV(Low,3)==LLV(Low, 13) AND (HHV(High, 3)-LLV(Low, 3))<=(HHV(High, 3)*.01) AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+Tristarbullish=LLV(Low,8)==Ref(Low,-2) AND Ref(Close,-2)<Ref(Open,-2) AND Ref(Close,-2)>=(Ref(Low,-2)+((Ref(High,-2)-Ref(Low,-2))*.25)) AND Ref(Open,-1)>Ref(Close,-2) AND Ref(Low,-1)>Ref(Low,-2) AND Ref(Close,-1)>=(Ref(Low,-1)+((Ref(High,-1)-Ref(Low,-1))*.25)) AND Ref(Close,-1)<Ref(Open,-1) AND High<Ref(High,-1) AND Low>Ref(Low,-1) AND High-Low<=(High*.01) AND LLV(Low, 5)==Min(Low, Ref(Low,-1));
+
+
+
+/*Candlestick Chart Of Bearish Sentiment Start */
+
+Abandonedbabybearish=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Low,-1)>Ref(High,-2) AND High<Ref(Low,-1) AND Close<=Open*.99 AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Belowthestomach= HHV(High, 3)==Ref(High,-1) AND Ref(C,-1) > Ref(O, -1) AND O < ((Ref(H,-1)+Ref(L,-1))/2) AND C < Ref(L,-1) AND C<O AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Beltholdbearish = HHV(High, 5)==High AND O> Ref(H,-1) AND  C< O AND O>=H*0.99 AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Breakawaybearish = LLV(Low,3)==Low AND C < O AND Ref(HHV(High, 5),-3)==Ref(H,-3) AND Ref(O,-3) > Ref(H, -3) AND Ref(H,-1) > Ref(H,-2) > Ref(H,-3) AND C<O AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Darkcloudcover=Ref(Open,-1)>=Ref(Close,-1)*1.01 AND Open>Ref(Close,-1) AND Close<=(Ref(Close,-1)-((Ref(Close,-1)-Ref(Open,-1))*.5)) AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Engulfingbearish=Open>Ref(High,-1) AND Close<Ref(Low,-1) AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Eveningstar=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Open,-1)>=Ref(Close,-2) AND Ref(Close,-1)>=Ref(Close,-2) AND Open<=Ref(Close,-1) AND Close<=Open*.99 AND HHV(High, 5)== Max(High, Ref(High, -1)) ;
+
+Matchinglow=LLV(Low,8)==LLV(Low,2) AND Ref(Close,-1)<=Ref(Open,-1)*.99 AND abs(Close-Ref(Close,-1))<=Close*.0025 AND Open>Ref(Close,-1) AND Open<=(High-((High-Low)*.5)) AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Shootingstar=Low>Ref(High,-1) AND Open<=(Low+((High-Low)*.25)) AND Close<=(Low+((High-Low)*.25)) AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+Tristarbearish=HHV(High, 3)==HHV(High, 13) AND (HHV(High, 3)-LLV(Low, 3))<=( HHV(High, 3)*.01) AND HHV(High, 5)== Max(High, Ref(High, -1));
+
+
+
+
+/*Candlestick Chart Of Bullish Sentiment Continuation */
+
+Whitemarubuzu = Whitebody AND Realbodypercent >= 1.5 AND Smalluppershadow AND Smalllowershadow;
+
+Opiningwhitemarubuzu = Whitebody AND Realbodypercent >= 1.5 AND Smalluppershadow;
+
+Closingwhitemarubuzu = Whitebody AND Realbodypercent >= 1.5 AND Smalllowershadow;
+
+Concealingbabyswallow=Ref(Close,-3)<=Ref(Open,-3)*.99 AND Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(Open,-1)<Ref(Close,-2) AND Ref(High,-1)>Ref(Close,-2) AND Open>Ref(Close,-2) AND Close<=Ref(Close,-1) AND LLV(Low,2)==LLV(Low,8);
+
+Downsidegapthree=Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(High,-1)<Ref(Low,-2) AND Ref(Close,-1)<=Ref(Open,-1)*.99 AND Open<Ref(Open,-1) AND Close>Ref(Close,-2) AND LLV(Low,5)==Ref(Low,-1) ;
+
+Hangingman=Open>Ref(High,-1) AND Open>=(High-((High-Low)*.25)) AND Close>=(High-((High-Low)*.25));
+
+Haramibullish=Ref(Close,-1)<=Ref(Open,-1)*.99 AND High<=Ref(Open,-1) AND Low>=Ref(Close,-1) AND Close>Open AND LLV(Low, 5) ==Low;
+
+Haramicrossbullish=Ref(Close,-1)<=Ref(Open,-1)*.99 AND High<Ref(Open,-1) AND Low>Ref(Close,-1) AND LLV(Low, 5) ==Low;
+
+Highpricegapping=Ref(Close,-4)>=Ref(Open,-4)*1.01 AND HHV(Ref(High, -1),3)<=Ref(High,-4) AND LLV(Ref(Low, -1), 3) >=Ref(Low,-4) AND Close>Open*1.01 AND Low>=Ref(High,-4);
+
+Kickingbullish=Ref(Close,-1)<=Ref(Open,-1)*.99 AND Low>=Ref(High,-1) AND Close>=Open*1.01;
+
+Mathold=Ref(Close,-4)>=Ref(Open,-4)*1.01 AND Ref(Low,-3)>Ref(High,-4) AND Ref(High,-1)<Ref(High,-3) AND Ref(Low,-1)<Ref(Low,-3) AND Ref(Close,-3)<Ref(Open,-3) AND LLV(Ref(L,-1),3) > Ref(Low,-4) AND Open<Ref(Open,-1) AND Close>HHV(Ref(H,-1),3) AND Close>=Open*1.01;
+
+Meetinglinesbullish=Ref(Close,-1)<=Ref(Open,-1)*.99 AND abs(Close-Ref(Close,-1))<=Close*.0025 AND Close>=Open*1.01;
+
+Onneck=Ref(Close,-1)<=Ref(Open,-1)*.99 AND Open<Ref(Low,-1) AND Close>Open AND Close<Ref(Close,-1);
+
+Risingthree=Ref(Close,-4)>Ref(Open,-4) AND Ref(High,-3)>Ref(High,-4) AND Ref(High,-1)<Ref(High,-3) AND Ref(Low,-1)<Ref(Low,-3) AND Ref(Close,-3)<Ref(Open,-3) AND LLV(Ref(Low,-1),3)>Ref(Low,-4) AND Close>=Open*1.01 AND Close>HHV(Ref(H,-1),3);
+
+Seperatinglinesbullish=Ref(Close,-1)<=Ref(Open,-1)*.99 AND abs(Open-Ref(Open,-1))<=Open*.0025 AND Close>=Open*1.01;
+
+Sidebysidewhitelinesbullish=HHV(High,2)==HHV(High,8) AND Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Low,-1)>Ref(High,-2) AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Low>Ref(High,-2) AND Open<=Ref(Open,-1)*1.005 AND Close>=Open*1.01;
+
+Sticksandwich=LLV(Low, 8)==LLV(Low, 3) AND Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Ref(Close,-1)>=Ref(High,-2) AND Open>=Ref(High,-1) AND abs(Close-Ref(Close,-2))<=Close*.0025;
+
+Tasukigapbearish=Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(High,-1)<Ref(Low,-2) AND Ref(Close,-1)<=Ref(Open,-1)*.99 AND Open<Ref(High,-1) AND Close>Ref(High,-1) AND High<Ref(Low,-2);
+
+Threeinsideupconfirmation=Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(High,-1)<=Ref(Open,-2) AND Ref(Low,-1)>=Ref(Close,-2) AND Close>Ref(Open,-2);
+
+Threelinestrikebullish=Ref(Open,-2)<Ref(Close,-3) AND Ref(Open,-1)<Ref(Close,-2) AND Ref(Close,-2)>Ref(Close,-3) AND Ref(Close,-1)>Ref(Close,-2) AND Ref(Close,-3)>=Ref(Open,-3)*1.01 AND Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Open>Ref(Close,-1) AND Close< LLV( Ref(Open,-1), 3);
+
+Threeriverbottom=Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(Open,-1)>Ref(Close,-2) AND Ref(Close,-1)>Ref(Close,-2) AND Close>Open AND Close<Ref(Open,-2) AND Open>Ref(Close,-2) AND Ref(Open,-1)>=(Ref(High,-1)-((Ref(High,-1)-Ref(Low,-1))*.25)) AND Ref(Close,-1)>=(Ref(High,-1)-((Ref(High,-1)-Ref(Low,-1))*.25));
+
+Threeoutsideup=Ref(Open,-1)<Ref(Low,-2) AND Ref(Close,-1)>Ref(High,-2) AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Close>Ref(High,-1) AND Close>Open;
+
+Threewhitesoldiers=LLV(Low,8)==Ref(Low,-2) AND Ref(Open,-1)<Ref(Close,-2) AND Open<Ref(Close,-1) AND Ref(Close,-1)>Ref(Close,-2) AND Close>Ref(Close,-1) AND Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Close>=Open*1.01;
+
+Windowrising = O>Ref(High,-1)*1.005 AND L>Ref(High,-1)*1.005;
+
+
+
+/*Candlestick Chart Of Bearish Sentiment Continuation */
+
+
+Blackmarubuzu = Blackbody AND Realbodypercent >= 1.5 AND Smalluppershadow AND Smalllowershadow;
+
+Opiningblackmarubuzu = Blackbody AND Realbodypercent >= 1.5 AND Smalluppershadow;
+
+Closingblackmarubuzu = Blackbody AND Realbodypercent >= 1.5 AND Smalllowershadow;
+
+Advanceblock=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(High,-1)>Ref(High,-2) AND Ref(Close,-1)>Ref(Open,-1) AND Close>Open AND High>Ref(High,-1) AND (Ref(Close,-1)-Ref(Open,-1))<(Ref(Close,-2)-Ref(Open,-2)) AND (Close-Open)<(Ref(Close,-1)-Ref(Open,-1));
+
+Deliberation=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(High,-1)>Ref(High,-2) AND Ref(Close,-1)>Ref(Open,-1)*1.01 AND Close>Open AND High>Ref(High,-1) AND (Close-Open)<(Ref(Close,-1)-Ref(Open,-1));
+
+Fallingthree=Ref(Close,-4)<Ref(Open,-4) AND Ref(High,-3)<Ref(High,-4) AND Ref(High,-1)>Ref(High,-3) AND Ref(Low,-1)>Ref(Low,-3) AND HHV(Ref(H,-1),3) <= Ref(High,-4) AND Open>Ref(Low,-1) AND Close<LLV(Ref(Low,-1),3);
+
+Hammerinverted=Open<=(Low+((High-Low)*.25)) AND Close<=(Low+((High-Low)*.25));
+
+Haramibearish=Ref(Close,-1)>=Ref(Open,-1)*1.01 AND High<Ref(Close,-1) AND Low>Ref(Open,-1) AND HHV(High,5)==Ref(High,-1) ;
+
+Haramicrossbearish=Ref(Close,-1)>=Ref(Open,-1)*1.01 AND High<Ref(Close,-1) AND Low>Ref(Open,-1) AND HHV(High,5)==Ref(High,-1);
+
+Homingpigeon=Ref(Close,-1)<=Ref(Open,-1)*.99 AND High<=Ref(Open,-1) AND Low>=Ref(Close,-1) AND Close<Open;
+
+Inneck=Ref(Close,-1)<=Ref(Open,-1)*.99 AND Open<Ref(Low,-1) AND Close>Open AND abs(Close-Ref(Close,-1))<=(Close*.0025);
+
+Lowpricegapping=Ref(Close,-4)<Ref(Open,-4)*.99 AND HHV(Ref(High,-1),3)<=(LLV(Ref(Low, -1),3)*1.01) AND High<LLV(Ref(Low,-1),3) AND Close<Open;
+
+Meetinglinesbearish=Ref(Close,-1)>Ref(Open,-1) AND Open>=Ref(Close,-1)*1.01 AND abs(Close-Ref(Close,-1))<=Close*.0025;
+
+Seperatinglinesbearish=Ref(Close,-1)>=Ref(Open,-1)*1.01 AND abs(Open-Ref(Open,-1))<=Open*.0025 AND Close<Open*.99;
+
+Sidebysidewhitelinesbearish=LLV(Low, 8)==LLV(Low, 2) AND Ref(High,-1)<Ref(Low,-2) AND High<Ref(Low,-2) AND Ref(Close,-2)<=Ref(Open,-2)*.99 AND Open<=Ref(Open,-1)*1.005 AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Close>=Open*1.01;
+
+Tasukigapbullish=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Low,-1)>Ref(High,-2) AND Ref(Close,-1)>=Ref(Open,-1)*1.01 AND Close<Open AND Close<Ref(Close,-1) AND Low>Ref(High,-2);
+
+Threeblackcrows=HHV(High,8)==Ref(High,-2) AND Ref(Open,-1)>Ref(Close,-2) AND Open>Ref(Close,-1) AND Ref(Close,-1)<Ref(Close,-2) AND Close<Ref(Close,-1) AND Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(Close,-1)<=Ref(Open,-1)*.99 AND Close<=Open*.99;
+
+Threeinsidedownconfirmation=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(High,-1)<Ref(Close,-2) AND Ref(Low,-1)>Ref(Open,-2) AND Close<Ref(Open,-2) AND Open>Ref(Open,-2);
+
+Threelinestrikebearish=HHV(High,8)==Ref(High,-3) AND Ref(Open,-2)>Ref(Close,-3) AND Ref(Open,-1)>Ref(Close,-2) AND Ref(Close,-2)<Ref(Close,-3) AND Ref(Close,-1)<Ref(Close,-2) AND Ref(Close,-3)<=Ref(Open,-3)*.99 AND Ref(Close,-2)<=Ref(Open,-2)*.99 AND Ref(Close,-1)<=Ref(Open,-1)*.99 AND Open<Ref(Low,-1) AND Close>HHV(Ref(H,-1),3);
+
+Threeoutsidedown=Ref(Open,-1)>Ref(High,-2) AND Ref(Close,-1)<Ref(Low,-2) AND Ref(Close,-1)<=Ref(Open,-1)*1.01 AND Close<Ref(Low,-1) AND Close<Open;
+
+Twocrows=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Open,-1)>=Ref(Close,-2) AND Ref(Close,-1)>=Ref(Close,-2) AND Open>Ref(Low,-1) AND Open<Ref(High,-1) AND Close<=Open*.99;
+
+Upsidegaptwocrows=Ref(Close,-2)>=Ref(Open,-2)*1.01 AND Ref(Open,-1)>=Ref(Close,-2) AND Ref(Close,-1)>=Ref(Close,-2) AND Open>Ref(High,-1) AND Close<Ref(Low,-1);
+
+Windowfalling = O<Ref(Low,-1)*0.995 AND H<Ref(Low,-1)*0.995 ;
+
+
+/*Bullish Doji Reversal Set Ups*/
+
+OnebarDojibullish1 = abs(Close-Open) <= (Close*.0025) AND LLV(Low, 8)==Min(Low, Ref(Low,-1));
+
+OnebarDojibullish2 = abs(Open-Close)<=((High-Low)*0.1) AND LLV(Low, 8)==Min(Low, Ref(Low,-1));
+
+OnebarDojibullishyesterday1=(abs(Ref(Close,-1)-Ref(Open,-1)) <= (Ref(Close,-1)*.0025) AND LLV(Low, 8)==Ref(Low,-1));
+
+OnebarDojibullishyesterday2=(abs(Ref(Open,-1)-Ref(Close,-1))<=((Ref(High,-1)-Ref(Low,-1))*0.1) AND LLV(Low, 8)==Ref(Low,-1));
+
+
+/*Bearish Doji Reversal Set Ups*/
+
+Dojibearish1=abs(Close-Open) <= (Close*.0025) AND HHV(High, 8)== Max(High, Ref(High, -1));
+
+Dojibearish2=abs(Open-Close)<=((High-Low)*0.1)AND HHV(High, 8)==Max(High, Ref(High, -1));
+
+Dojibearishyesterday1=abs(Ref(Close,-1)-Ref(Open,-1)) <= (Ref(Close,-1)*.0025) AND HHV(High, 8)==Max(Ref(High,-1),Ref(High,-2));
+
+Dojibearishyesterday2=(abs(Ref(Open,-1)-Ref(Close,-1))<=((Ref(High,-1)-Ref(Low,-1))*0.1)AND HHV(High, 8)==Ref(High,-1));
+
+
+
+/*Bullish Wick Reversal Set Up */
+
+Onebarbullishwick=(Range/Realbody)>3.5 AND C>= (Low +Range*0.8) AND LLV(Low,5)==Low;
+
+Twobarbullishwick=(Range1/Realbody1)>3.5 AND C>= (Min(L,Ref(L,-1)) +Range1*0.8) AND LLV(Low,5)==Min(L,Ref(L,-1)) AND L < Ref(L, -1);
+
+Threebarbullishwick=(Range2/Realbody2)>3.5 AND C>= (Min(Min1,Ref(L,-2)) +Range2*0.8) AND LLV(Low,5)==Min(Min1,Ref(L,-2)) AND L < Ref(L, -1);
+
+
+/*Bearish Wick Reversal Set Up */
+
+Onebarbearishwick=(Range/Realbody)>3.5 AND C<= (High-Range*0.8) AND HHV(High, 5)==High;
+
+Twobarbearishwick=(Range1/Realbody1)>3.5 AND C<= (Max(H, Ref(H,-1))-Range1*0.8) AND HHV(High, 5)==Max(H, Ref(H,-1)) AND H < Ref(H, -1);
+
+Threebarbearishwick=(Range2/Realbody2)>3.5 AND C<= (Max(Max1,Ref(H,-2))-Range2*0.8) AND HHV(High, 5)==Max(Max1,Ref(H,-2)) AND H < Ref(H, -1);
+
+
+/*Bullish Extreme Reversal Setup*/
+Candleaverage = Ref(MA(H, 5), -1) - Ref(MA(L, 5), -1);
+Theextremereversalbullish = Range > 3*Candleaverage AND HHV(L, 5) ==Low AND Realbody > Range*0.5 AND Realbody < Range*0.85;
+
+/*Bearish Extreme Reversal Setup*/
+
+Theextremereversalbearish = Range > 3*Candleaverage AND HHV(H, 5) ==High AND C<= (L +Range*0.8) AND C>= (L +Range*0.4);
+
+
+/*Bullish Trend Continuation */
+
+Fivedaynewlinepatternbullish = (H>Ref(H,-1) AND Ref(H,-1) >Ref(H,-2) AND Ref(H,-2) >Ref(H,-3) AND Ref(H,-3) >Ref(H,-4) ) OR (L>Ref(L,-1) AND Ref(L,-1) >Ref(L,-2) AND Ref(L,-2) >Ref(L,-3) AND Ref(L,-3) >Ref(L,-4) );
+
+Eightdaynewlinepatternbullish = (H>Ref(H,-1) AND Ref(H,-1) >Ref(H,-2) AND Ref(H,-2) >Ref(H,-3) AND Ref(H,-3) >Ref(H,-4) AND Ref(H,-4) >Ref(H,-5) AND Ref(H,-5) >Ref(H,-6) AND Ref(H,-6) >Ref(H,-7) ) OR (L>Ref(L,-1) AND Ref(L,-1) >Ref(L,-2) AND Ref(L,-2) >Ref(L,-3) AND Ref(L,-3) >Ref(L,-4) AND Ref(L,-4) >Ref(L,-5) AND Ref(L,-5) >Ref(L,-6) AND Ref(L,-6) >Ref(L,-7) );
+
+Thrteendaynewlinepatternbullish  = (H>Ref(H,-1) AND Ref(H,-1) >Ref(H,-2) AND Ref(H,-2) >Ref(H,-3) AND Ref(H,-3) >Ref(H,-4) AND Ref(H,-4) >Ref(H,-5) AND Ref(H,-5) >Ref(H,-6) AND Ref(H,-6) >Ref(H,-7) AND Ref(H,-7) >Ref(H,-8) AND Ref(H,-8) >Ref(H,-9) AND Ref(H,-9)>Ref(H,-10) AND Ref(H,-10)>Ref(H,-11) AND Ref(H,-11) >Ref(H,-12) ) OR (L>Ref(L,-1) AND Ref(L,-1) >Ref(L,-2) AND Ref(L,-2) >Ref(L,-3) AND Ref(L,-3) >Ref(L,-4) AND Ref(L,-4) >Ref(L,-5) AND Ref(L,-5) >Ref(L,-6) AND Ref(L,-6) >Ref(L,-7)  AND Ref(L,-7) >Ref(L,-8)  AND Ref(L,-8) >Ref(L,-9) AND Ref(L,-9)  >Ref(L,-10) AND Ref(L,-10) >Ref(L,-11)  AND Ref(L,-11)   >Ref(L,-12) );
+
+
+
+/*Bearish Trend Continuation */
+
+
+Fivedaynewlinepatternbearish = (H<Ref(H,-1) AND Ref(H,-1) <Ref(H,-2) AND Ref(H,-2) <Ref(H,-3) AND Ref(H,-3) <Ref(H,-4) ) OR (L<Ref(L,-1) AND Ref(L,-1) <Ref(L,-2) AND Ref(L,-2) <Ref(L,-3) AND Ref(L,-3) <Ref(L,-4) );
+
+Eightdaynewlinepatternbearish = (H<Ref(H,-1) AND Ref(H,-1) <Ref(H,-2) AND Ref(H,-2) <Ref(H,-3) AND Ref(H,-3) <Ref(H,-4) AND Ref(H,-4) <Ref(H,-5) AND Ref(H,-5) <Ref(H,-6) AND Ref(H,-6) <Ref(H,-7) ) OR (L<Ref(L,-1) AND Ref(L,-1) <Ref(L,-2) AND Ref(L,-2) <Ref(L,-3) AND Ref(L,-3) <Ref(L,-4) AND Ref(L,-4) <Ref(L,-5) AND Ref(L,-5) <Ref(L,-6) AND Ref(L,-6) <Ref(L,-7) );
+
+Thrteendaynewlinepatternbearish  = (H<Ref(H,-1) AND Ref(H,-1) <Ref(H,-2) AND Ref(H,-2) <Ref(H,-3) AND Ref(H,-3) <Ref(H,-4) AND Ref(H,-4) <Ref(H,-5) AND Ref(H,-5) <Ref(H,-6) AND Ref(H,-6) <Ref(H,-7) AND Ref(H,-7) <Ref(H,-8) AND Ref(H,-8) <Ref(H,-9) AND Ref(H,-9)<Ref(H,-10) AND Ref(H,-10)<Ref(H,-11) AND Ref(H,-11) <Ref(H,-12) ) OR (L<Ref(L,-1) AND Ref(L,-1) <Ref(L,-2) AND Ref(L,-2) <Ref(L,-3) AND Ref(L,-3) <Ref(L,-4) AND Ref(L,-4) <Ref(L,-5) AND Ref(L,-5) <Ref(L,-6) AND Ref(L,-6) <Ref(L,-7)  AND Ref(L,-7) <Ref(L,-8)  AND Ref(L,-8) <Ref(L,-9) AND Ref(L,-9)  <Ref(L,-10) AND Ref(L,-10) <Ref(L,-11)  AND Ref(L,-11)   <Ref(L,-12) );
+
+
+
+Sts1 = /*Bullish Sentiment Start*/
+WriteIf(Abandonedbabybullish, "Abandonedbaby Bullish",
+WriteIf(Abovethestomach, "Above The Stomach",
+WriteIf(Beltholdbullish, "Belthold Bullish",
+WriteIf(Breakawaybullish, "Breakaway Bullish",
+WriteIf(Engulfingbullish, "Engulfing Bullish",
+WriteIf(Hammer, "Hammer",
+WriteIf(Matchinghigh, "Matching High",
+WriteIf(Morningstar, "Morning Star",
+WriteIf(Piercingline, "Piercing Line",
+WriteIf(Threestarsinthesouth, "Three Stars In The South",
+WriteIf(Tristarbullish, "Tristar Bullish",
+
+/*Bearish Sentiment Start */
+
+WriteIf(Abandonedbabybearish, "Abandoned Baby Bearish",
+WriteIf(Belowthestomach, "Belowthe Stomach",
+WriteIf(Beltholdbearish, "Belthold Bearish",
+WriteIf(Breakawaybearish, "Breakaway Bearish",
+WriteIf(Darkcloudcover, "Darkcloud Cover",
+WriteIf(Engulfingbearish, "Engulfing Bearish",
+WriteIf(Eveningstar, "Evening Star",
+WriteIf(Matchinglow, "Matching Low",
+WriteIf(Shootingstar, "Shooting Star",
+WriteIf(Tristarbearish, "Tristar Bearish","")))))))))))))))))))));
+
+
+Sts2 =/*Bullish Sentiment Continuation */
+
+WriteIf(Whitemarubuzu, "White Marubuzu",
+WriteIf(Opiningwhitemarubuzu, "Opining White Marubuzu",
+WriteIf(Closingwhitemarubuzu, "Closing White Marubuzu",
+WriteIf(Concealingbabyswallow, "Concealing Baby Swallow",
+WriteIf(Downsidegapthree, "Downside Gap Three",
+WriteIf(Hangingman, "Hanging Man",
+WriteIf(Haramibullish, "Harami Bullish",
+WriteIf(Haramicrossbullish, "Harami Cross Bullish",
+WriteIf(Highpricegapping, "High Price Gapping",
+WriteIf(Kickingbullish, "Kicking Bullish",
+WriteIf(Mathold, "Mat Hold",
+WriteIf(Meetinglinesbullish, "Meetinglines Bullish",
+WriteIf(Onneck, "On Neck",
+WriteIf(Risingthree, "Rising Three",
+WriteIf(Seperatinglinesbullish, "Seperating Line Sbullish",
+WriteIf(Sidebysidewhitelinesbullish, "Sidebysidewhite Lines Bullish",
+WriteIf(Sticksandwich, "Sticksandwich",
+WriteIf(Tasukigapbearish, "Tasukigap Bearish",
+WriteIf(Threeinsideupconfirmation, "Three Inside Up Confirmation",
+WriteIf(Threelinestrikebullish, "Three Line Strike Bullish",
+WriteIf(Threeriverbottom, "Threeriver Bottom",
+WriteIf(Threeoutsideup, "Three Outside Up",
+WriteIf(Threewhitesoldiers, "Three White Soldiers",
+WriteIf(Windowrising, "Window Rising",
+
+
+/*Bearish Sentiment Continuation */
+
+WriteIf(Blackmarubuzu, "Black Marubuzu",
+WriteIf(Opiningblackmarubuzu, "Opining Black Marubuzu",
+WriteIf(Closingblackmarubuzu, "Closing Black Marubuzu",
+WriteIf(Advanceblock, "Advance Block",
+WriteIf(Deliberation, "Deliberation",
+WriteIf(Fallingthree, "Falling Three",
+WriteIf(Hammerinverted, "Hammer Inverted",
+WriteIf(Haramibearish, "Harami Bearish",
+WriteIf(Haramicrossbearish, "Harami Cross Bearish",
+WriteIf(Homingpigeon, "Homing Pigeon",
+WriteIf(Inneck, "In Neck",
+WriteIf(Lowpricegapping, "Lowprice Gapping",
+WriteIf(Meetinglinesbearish, "Meetinglines Bearish",
+WriteIf(Seperatinglinesbearish, "Seperating Lines Bearish",
+WriteIf(Sidebysidewhitelinesbearish, "Sidebyside Whitelines Bearish",
+WriteIf(Tasukigapbullish, "Tasuki Gap Bullish",
+WriteIf(Threeblackcrows, "Three Blackcrows",
+WriteIf(Threeinsidedownconfirmation, "Three Inside Down Confirmation",
+WriteIf(Threelinestrikebearish, "Three Linestrike Bearish",
+WriteIf(Threeoutsidedown, "Three Outside Down",
+WriteIf(Twocrows, "Two Crows",
+WriteIf(Upsidegaptwocrows, "Upsidegap Two Crows",
+WriteIf(Windowfalling, "Window Falling","")))))))))))))))))))))))))))))))))))))))))))))));
+
+Sts3 =/*Bullish Doji Reversal Set Ups*/
+
+WriteIf(OnebarDojibullish1, "Doji Bullish Today 1",
+WriteIf(OnebarDojibullish2, "Doji Bullish Today 2",
+WriteIf(OnebarDojibullishyesterday1, "Doji Bullish Yesterday 1",
+WriteIf(OnebarDojibullishyesterday2, "Doji Bullish Yesterday 2",
+
+/*Bearish Doji Reversal Set Ups*/
+
+WriteIf(Dojibearish1, "Doji Bearish Today 1",
+WriteIf(Dojibearish2, "Doji Bearish Today 2",
+WriteIf(Dojibearishyesterday1, "Doji Bearish Yesterday 1",
+WriteIf(Dojibearishyesterday2, "Doji Bearish Yesterday 2",""))))))));
+
+Sts4 =/*Bullish Wick Reversal Set Up */
+
+WriteIf(Onebarbullishwick, "Onebar Bullish Wick",
+WriteIf(Twobarbullishwick, "Twobar Bullish Wick",
+WriteIf(Threebarbullishwick, "Threebar Bullish Wick",
+
+/*Bearish Wick Reversal Set Up */
+
+WriteIf(Onebarbearishwick, "Onebar Bearish Wick",
+WriteIf(Twobarbearishwick, "Twobar Bearish Wick",
+WriteIf(Threebarbearishwick, "Threebar Bearish Wick",""))))));
+
+Sts5 =/*Bullish Trend Continuation */
+WriteIf(Thrteendaynewlinepatternbullish, "Thrteenday Newlinepattern Bullish",
+WriteIf(Eightdaynewlinepatternbullish, "Eightday Newlinepattern Bullish",
+WriteIf(Fivedaynewlinepatternbullish, "Fiveday Newlinepattern Bullish",
+
+
+/*Bearish Trend Continuation */
+WriteIf(Thrteendaynewlinepatternbearish, "Thrteenday Newline Pattern Bearish",
+WriteIf(Eightdaynewlinepatternbearish, "Eightday Newlinepattern Bearish",
+WriteIf(Fivedaynewlinepatternbearish, "Fiveday Newlinepattern Bearish", ""))))));
+
+Sts6 =/*Bullish Extreme Reversal Setup */
+WriteIf(Theextremereversalbullish, "Extreme Reversal Bullish",
+
+/*Bearish Trend Continuation */
+WriteIf(Theextremereversalbearish, "Extreme Reversal Bearish", ""));
+
+
+
+
+Filter = 1;
+
+Col1 =  IIf(Abandonedbabybullish OR Abovethestomach OR Beltholdbullish OR Breakawaybullish OR Piercingline OR Engulfingbullish OR Hammer OR Matchinghigh OR Morningstar  OR Threestarsinthesouth OR Tristarbullish, colorGreen,
+    IIf( Abandonedbabybearish OR Belowthestomach OR Beltholdbearish OR Breakawaybearish OR Darkcloudcover OR Engulfingbearish OR Shootingstar OR Eveningstar OR Matchinglow OR Tristarbearish, colorRed, 0));
+
+Col2 =  IIf(Whitemarubuzu OR Opiningwhitemarubuzu OR Closingwhitemarubuzu OR Concealingbabyswallow OR Downsidegapthree OR Hangingman OR Haramibullish OR Haramicrossbullish OR Highpricegapping OR Kickingbullish OR Mathold OR Meetinglinesbullish OR Onneck OR Risingthree OR Seperatinglinesbullish OR Sidebysidewhitelinesbullish OR Sticksandwich OR Tasukigapbearish OR Threeinsideupconfirmation OR Threelinestrikebullish OR Threeriverbottom  OR Threeoutsideup  OR Threewhitesoldiers OR Windowrising, colorGreen,
+    IIf(  Blackmarubuzu OR Opiningblackmarubuzu OR Closingblackmarubuzu OR Advanceblock OR Deliberation OR Fallingthree OR Hammerinverted OR Haramibearish OR Haramicrossbearish OR Homingpigeon OR Inneck OR Lowpricegapping OR Meetinglinesbearish OR Seperatinglinesbearish OR Sidebysidewhitelinesbearish OR Tasukigapbullish OR Threeblackcrows OR Threeinsidedownconfirmation OR Threelinestrikebearish OR Threeoutsidedown OR Twocrows OR Upsidegaptwocrows OR Windowfalling, colorRed, 0));
+
+Col3 =  IIf(OnebarDojibullish1 OR OnebarDojibullish2 OR OnebarDojibullishyesterday1 OR OnebarDojibullishyesterday2, colorGreen,
+    IIf( Dojibearish1 OR Dojibearish2 OR Dojibearishyesterday1 OR Dojibearishyesterday2, colorRed, 0));
+
+Col4 =  IIf(Onebarbullishwick OR Twobarbullishwick OR Threebarbullishwick, colorGreen,
+    IIf(Onebarbearishwick OR Twobarbearishwick OR Threebarbearishwick, colorRed, 0));
+
+Col5 =  IIf(Fivedaynewlinepatternbullish OR Eightdaynewlinepatternbullish OR Thrteendaynewlinepatternbullish, colorGreen,
+    IIf(Fivedaynewlinepatternbearish OR Eightdaynewlinepatternbearish OR Thrteendaynewlinepatternbearish, colorRed, 0));
+
+Col6 =  IIf(Theextremereversalbullish, colorGreen,
+    IIf(Theextremereversalbearish, colorRed, 0));
+
+AddColumn(C, "Close", 1.2);
+AddTextColumn(Sts1, "Sentiment Start      ", 1.0, Col1, colorDefault,150);
+
+AddTextColumn(Sts2, "Sentiment Continuation", 1.0, Col2, colorDefault,150);
+
+AddTextColumn(Sts3, "Doji Reversal Set Up", 1.0, Col3, colorDefault,150);
+
+AddTextColumn(Sts4, "Wick Reversal Set Up", 1.0, Col4, colorDefault,150);
+
+AddTextColumn(Sts5, "Trend Continuation", 1.0, Col5, colorDefault,150);
+
+AddTextColumn(Sts6, "Extreme Reversal Set up", 1.0, Col6, colorDefault,150);

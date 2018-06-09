@@ -1,0 +1,14 @@
+Pct = Param("%Change",1,0,100,1);
+RctPnT=Param("Recent PnT",1,1,100,1);
+Prc = MA((O + H + L + C)/4,2);
+Pk = Peak(H,Pct,RctPnT);
+Tr  = Trough(L,Pct,RctPnT);
+Upper = Ref(ValueWhen(Pk!=Ref(Pk,-1),H,RctPnT),-1);
+Lower = Ref(ValueWhen(Tr!=Ref(Tr,-1),L,RctPnT),-1);
+bspu = BarsSince(Pk!=Ref(Pk,-1)); //
+//Plot(Upper,"",ParamColor("Upper",colorBlue),styleDashed); 
+//Plot(Lower,"",ParamColor("Lower",colorOrange),styleDashed);
+Plot(Ref(Upper,-bspu),"support",ParamColor("support",colorGreen),styleDashed); 
+for(i=0;i<BarCount-1;i++) {
+	PlotText(""+bspu[i],i, L[i]-L[i]*0.01,colorRed);
+}

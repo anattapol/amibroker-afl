@@ -1,0 +1,6 @@
+
+top = ParamField("top");
+bottom = ParamField("bottom");
+
+//Plot(DonchianH,"Donchian Upper", ParamColor( "Color", colorCycle ), ParamStyle("Style"));
+PlotOHLC(top,top,bottom,bottom,"squeeze zone",ParamColor( "Color", colorCycle ),styleCloud );

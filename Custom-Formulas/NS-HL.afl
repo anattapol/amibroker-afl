@@ -1,0 +1,20 @@
+function Months(m){return 252/(12/m);}
+period = Param("Period", 260, 20, 520, 5);
+{//New High - New Low
+	prevHigh	=	Ref( HHV(Close, period), -1);
+	newHigh	=	Cross(Close, prevHigh);
+	prevLow	=	Ref( LLV(Close, period), -1);
+	newLow	=	Cross(prevLow, Close);
+}
+{//Add to Composite
+	AddToComposite( newHigh, "~newHL", "H" );
+	AddToComposite( newLow, "~newHL", "L" );
+	AddToComposite( IIf(Close > 0, 1,0), "~newHL", "I"); //Counting Number of Stocks
+}
+{//Calculate in %
+	pctNH = 100*foreign( "~newHL", "H")/foreign( "~newHL", "I");
+}
+{// Plotting
+	Plot(foreign( "~newHL", "H"), "New High "+period, ParamColor("Color",16), ParamStyle("Style",4));
+	Plot(foreign( "~newHL", "L"), "New Low "+period, ParamColor("Color",10), ParamStyle("Style",4));
+}

@@ -1,0 +1,18 @@
+////////////////////////////////////////////////////////////////////////////////////////
+nVolume=Volume;
+nValue=(Volume*C);
+nSpread=((H-L)/L)*100;
+
+Filter = C; 
+
+AddTextColumn( FullName(), "Company Name" );
+AddColumn(32,"Candle" ,formatChar, colorDefault,IIf(O<=C,colorGreen,colorRed)  );
+AddColumn( nSpread, "Spread%", 1.2 , colorDefault,IIf(O<=C,colorLime,colorRed));
+AddColumn( H, " High ", 1.2 );
+AddColumn( L, " Low ", 1.2 );
+AddColumn( O, " Open ", 1.2 );
+AddColumn( C, "Close", 1.2, IIf(C < Ref(C,-1), colorRed, IIf(C > Ref(C,-1),colorGreen,colorDefault)));
+AddColumn( nVolume, "Most Active Volume", 1, IIf(V > Ref(V,-1), colorGreen, colorRed),-1,120);
+AddColumn( nValue, "Most Actie Value",1,21,colorWhite,120);
+AddColumn(ROC(C,1),"Top Gainers/Top Losers",1.2,colorDefault,IIf(ROC(C,1)<0,colorRed,IIf(ROC(C,1)>0,colorLime,colorLightGrey)),150);
+////////////////////////////////////////////////////////////////////////////////////////

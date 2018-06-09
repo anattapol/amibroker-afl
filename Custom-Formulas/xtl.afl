@@ -1,0 +1,48 @@
+_SECTION_BEGIN("xtl");
+tgt = 35;
+a = CCI(20) < -tgt;
+b = CCI(20) > tgt;
+state = IIf(a>b,-1,IIf(a==b,0,1));
+Color = IIf(state == 0, colorBlack, IIf(state == 1, colorLime, IIf(state == -1, colorRed, 0)));
+
+//Plot(state, "", color, styleHistogram);
+
+SetChartOptions( 0, chartShowDates | chartShowArrows | chartLogarithmic | chartWrapTitle );
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", color, styleNoTitle |styleBar ); 
+ 
+_SECTION_END();
+
+_SECTION_BEGIN("DispMA");
+P = ParamField("Field");
+Type = ParamList("Type", "Simple,Exponential,Double Exponential,Tripple Exponential,Wilders,Weighted");
+Periods = Param("Periods",30, 2, 300 );
+Displacement = Param("Displacement", 15, -50, 50 );
+m = 0;
+
+if( Type == "Simple" ) 					m = MA( P, Periods );
+if( Type == "Exponential" ) 			m = EMA( P, Periods );
+if( Type == "Double Exponential" ) 	m = DEMA( P, Periods );
+if( Type == "Tripple Exponential" ) 	m = TEMA( P, Periods );
+if( Type == "Wilders" ) 				m = Wilders( P, Periods );
+if( Type == "Weighted" ) 				m = WMA( P, Periods );
+
+Plot( m, _DEFAULT_NAME(), ParamColor("Color", ColorCycle), ParamStyle("Style"), 0, 0, Displacement );
+_SECTION_END();
+
+_SECTION_BEGIN("DispMA1");
+P = ParamField("Field");
+Type = ParamList("Type", "Simple,Exponential,Double Exponential,Tripple Exponential,Wilders,Weighted");
+Periods = Param("Periods",30, 2, 300 );
+Displacement = Param("Displacement", 15, -50, 50 );
+m = 0;
+
+if( Type == "Simple" ) 					m = MA( P, Periods );
+if( Type == "Exponential" ) 			m = EMA( P, Periods );
+if( Type == "Double Exponential" ) 	m = DEMA( P, Periods );
+if( Type == "Tripple Exponential" ) 	m = TEMA( P, Periods );
+if( Type == "Wilders" ) 				m = Wilders( P, Periods );
+if( Type == "Weighted" ) 				m = WMA( P, Periods );
+
+Plot( m, _DEFAULT_NAME(), ParamColor("Color", ColorCycle), ParamStyle("Style"), 0, 0, Displacement );
+_SECTION_END();

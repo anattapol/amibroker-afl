@@ -1,0 +1,17 @@
+_SECTION_BEGIN("Customized VAP");
+segment = Param("Enter the segment value in days", 2,2,100,1);
+MyInterval = Null;
+
+// Now we will have to create group of candles as per the segment value entered above
+// and keep them under one segment
+
+for(i=0;i<BarCount;i++)
+{
+MyInterval[i]= ceil(i/segment);
+}
+
+MyInterval= IIf( Interval() < inDaily, Day(),MyInterval);
+MyInterval = MyInterval!= Ref(MyInterval, -1);
+
+PlotVAPOverlayA( MyInterval, Param("Lines", 100, 100, 1000, 1 ), Param("Width", 50, 1, 100, 1 ), ParamColor("Color", colorGold ), ParamToggle("Side", "Left|Right" ) | 2 * ParamToggle("Style", "Fill|Lines", 1) | 4*ParamToggle("Z-order", "On top|Behind", 1 ) );
+_SECTION_END();

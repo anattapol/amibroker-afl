@@ -1,0 +1,30 @@
+{//Options =====================================
+	SetOption("InitialEquity",600000);
+	SetOption("MinShares",100);
+	SetOption("NoDefaultColumns", True );
+	numStocks = 10;
+	SetOption( "MaxOpenPositions", numStocks );
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);	
+	settradedelays( 1, 1, 1, 1 );
+	RoundLotSize = 100;
+	slippage = 0.03;
+	BuyPrice = Open+(Open*slippage);//Open Next day
+	SellPrice = Open-(Open*slippage);
+	//BuyPrice = Max(Low,EMA(Close,20));
+}
+{// Tren Template by Mark minervini
+	
+}
+{//Filter
+	Filter =  Liq AND C >= hzone;
+	AddTextColumn( Name(), "Stock");
+	AddColumn(CRS_SCORE,"CRS-RATING");
+	AddColumn(RSI(14),"RSI14",1.2,colorDefault,
+		IIf(RSI(14)>=66.67,	colorPaleGreen
+			,IIf(RSI(14)<=33.33 ,colorPink
+				,colorWhite)
+			)
+		);
+	AddColumn(rocStrength,"rocStrength",1.2,colorDefault,IIf(rocStrength,colorTurquoise,colorWhite));
+}

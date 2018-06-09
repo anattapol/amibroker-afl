@@ -1,0 +1,3 @@
+PreviousBar = Ref(C,-1);
+Color=IIf(C<=PreviousBar,ParamColor("Bearish",colorRed),ParamColor("Bullish",colorBlack));
+Plot( Volume, _DEFAULT_NAME(), Color, ParamStyle( "Style", styleHistogram | styleOwnScale | styleThick, maskHistogram  ) );

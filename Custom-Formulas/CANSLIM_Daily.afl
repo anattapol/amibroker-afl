@@ -1,0 +1,239 @@
+{//Options =====================================
+	SetOption("InitialEquity",600000);
+	SetOption("MinShares",100);
+	SetOption("NoDefaultColumns", True );
+	RoundLotSize = 100;
+
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);
+
+	slippage = 0.01;
+
+	numStocks = 10;
+	SetOption( "MaxOpenPositions", numStocks );
+	
+	settradedelays( 1, 1, 1, 1 );
+	BuyPrice = Open+(Open*slippage);//Open Next day
+	SellPrice = Open-(Open*slippage);
+	//BuyPrice = Max(Low,EMA(Close,20));
+
+}
+
+{//MKC =====================================
+	SET =	Foreign("SET","CLOSE");
+}
+
+{//SIGNAL ==================================
+	{//Liquidity
+		Million = Optimize( "Million", 50, 50 , 800, 100 );
+		Value = Million*1000000;
+		Liq = Sum(Avg*Volume,10) >= Value;
+		VolMA = Volume > EMA(Volume,5)*1.5;
+		VolUp = Volume > Ref(Volume,-1);
+	}
+	
+	{//Indicator
+		Indy = RSI(55) > Ref(HHV(RSI(55),260),-1);
+		RSI_BO = Cross(RSI(14) ,66.66);
+	}
+	{//IBD RS Ranking
+		tr_monthly =  ( (C - Ref(C, -20)) / Ref(C, -20) * 100);
+		tr_quaterly = ( (C - Ref(C, -65)) / Ref(C, -65) * 100);
+		tr_halfyear =  ( (C - Ref(C, -130)) / Ref(C, -130) * 100);
+		tr_yearly =  ( (C - Ref(C, -260)) / Ref(C, -260) * 100);
+		RS_Long = (0.2*tr_quaterly) + (0.3*tr_halfyear) + (0.5*tr_yearly);
+		RS_Medium = (0.20*tr_quaterly) + (0.3*tr_halfyear) + (0.3*tr_yearly);
+		RS_Short = (0.3*tr_monthly)+(0.3*tr_quaterly) + (0.2*tr_halfyear) + (0.1*tr_yearly);
+	}
+	{//Strength
+		HighHighYear = HHV(High,260);
+		HighCloseYear=HHV(Close,260);
+		Close_vs_HighCloseYear= (abs(HighCloseYear-C)/HighCloseYear)*100;
+		Prev_HighHighYear = Ref(HighHighYear,-1);
+		BO_Year = Cross(Close,Prev_HighHighYear);
+		
+		HighHalfYear = HHV(High,130);
+		Prev_HighHalfYear = Ref(HighHalfYear,-1);
+		BO_HalfYear = Cross(Close,Prev_HighHalfYear);
+		
+		HighQuarterly = HHV(High,65);
+		Prev_HighQuarterly = Ref(HighQuarterly,-1);
+		BO_Quarterly = Cross(Close,Prev_HighQuarterly);
+		
+		High_Monthly = HHV(H,20);
+		Prev_High_Monthly = Ref(High_Monthly,-1);
+		BO_Monthly = Cross(H,Ref(High_Monthly,-1));	
+		
+		hZone = HighHighYear*0.80;
+		rocStrength = ROC(Close,10) > ROC(Foreign("SET","Close"),10)
+					AND ROC(Close,130) > ROC(Foreign("SET","Close"),130)
+					AND ROC(Close,260) > ROC(Foreign("SET","Close"),260);
+		strength = rocStrength;
+		C_vs_HighCloseYear = (C-HighCloseYear)*100/HighCloseYear;
+	}
+
+	{//Comparative Relative Strength
+		SET = Foreign("SET", "SET");
+		CRS_Month_Period = 20;
+		CRS_Month = (C / Ref(C,-1 * CRS_Month_Period)) / (SET / Ref(SET, -1 *CRS_Month_Period));
+		CRS_Month_SCORE = 100 - (100 / (1+CRS_Month));
+		CRS_Quater_Period = 65;
+		CRS_Quater = (C / Ref(C,-1 * CRS_Quater_Period)) / (SET / Ref(SET, -1 *CRS_Quater_Period));
+		CRS_Quater_SCORE = 100 - (100 / (1+CRS_Quater));
+		CRS_HalfYear_Period = 130;
+		CRS_HalfYear = (C / Ref(C,-1 * CRS_HalfYear_Period)) / (SET / Ref(SET, -1 *CRS_HalfYear_Period));
+		CRS_HalfYear_SCORE = 100 - (100 / (1+CRS_HalfYear));
+		CRS_Year_Period = 252;
+		CRS_Year = (C / Ref(C,-1 * CRS_Year_Period)) / (SET / Ref(SET, -1 *CRS_Year_Period));
+		CRS_Year_SCORE = 100 - (100 / (1+CRS_Year));
+		CRS_SCORE = ( CRS_Month_SCORE  + CRS_Quater_SCORE + CRS_HalfYear_SCORE  ) /3;
+	}
+	{// VCP -- Mark Minervini
+		Prev_LowHalfYear = Ref(LLV(Low,130),-1); //Low of Half Year
+		Prev_LowQuarter = Ref(LLV(Low,65),-1); //Low of Quater
+		Prev_LowMonthly = Ref(LLV(Low,20),-1); //Low of Month
+		HigherLow_VCP = Prev_LowMonthly > Prev_LowQuarter AND Prev_LowQuarter > Prev_LowHalfYear; // Higher Low
+//     ---------------
+//                      -----------------
+//                                        -----------
+//                                        -----------
+//                     -------------------
+//      ---------------
+		LowerHigh_VCP = Prev_HighHighYear >= Prev_HighHalfYear AND Prev_HighHalfYear >=Prev_High_Monthly; // Lower High 
+		PctDeptHighHighYear_VCP = ( (Prev_HighHighYear - Prev_LowHalfYear) / Prev_HighHighYear ) *100;
+		PctDeptHighHalfYear_VCP = ( (Prev_HighHalfYear - Prev_LowQuarter) / Prev_HighHighYear ) *100;
+		PctDeptHigh_Monthly_VCP = ( (Prev_High_Monthly - Prev_LowMonthly) / Prev_HighHighYear ) *100;
+		VCP = HigherLow_VCP AND LowerHigh_VCP AND Close > EMA(Close,50) AND
+			(
+				PctDeptHighHighYear_VCP >= PctDeptHighHalfYear_VCP
+				AND PctDeptHighHalfYear_VCP >= PctDeptHigh_Monthly_VCP
+			) ;//AND ( PctDeptHighHighYear_VCP <= 205)
+			//AND (Close < Prev_HighHighYear);
+	}
+	
+	{//20 Weeks Resting
+		High_Monthly = Ref(HHV(High,20),-1);
+		L20 = Ref(LLV(Low,20),-1);
+		RangeMonth = ((High_Monthly-L20)/High_Monthly)*100;
+	}
+	
+	{//20 Weeks Tight Close
+		maxC=Ref(HHV(C,20),-1);
+		minC=Ref(LLV(C,20),-1);
+		CSMonth=(maxC-minC)/maxC*100;
+	}
+	
+	{//Price vs EMA
+		Mov0 = EMA(Close,10);
+		Mov1 = EMA(Close,20);
+		Mov2 = EMA(Close,50);
+		P_EMA20 = Cross(Close,Mov1);
+		P_EMA50 = Cross(Close,Mov2);
+		PercOfEMA10 = (Close-Mov0)*100/Mov0;
+		PercOfEMA50 = (Close-Mov2)*100/Mov2;
+	}
+	
+	{// Price action on Moving Average
+
+		//Price cross EMA
+		pAc1 = Low <= Mov1*1.015 AND Close > Mov1;
+		//In case that Low not completely touch MA AND Close going up
+		pAc2	=	Low <= Mov2*1.015 AND Low > Mov2; //Percent of low than come to EMA zone but not touch.
+		{// Mov Avg
+			MovTrend = IIf(Mov0 > Mov1 AND Mov1 > Mov2,1,0);
+		}
+		{// Keltner
+			Periods = 130;
+			Width = 5;
+
+			CenterLine = MA( Close, Periods );
+			KTop   = CenterLine + Width * ATR( Periods );
+			
+			P_KTOP = Close >= KTop*0.98;
+		}
+	}
+	
+{ //Profit/Loss % Change over Time
+		// PARAMETERS
+		TtD_Param = ParamList("Period","Day to Date|Week to Date|Month to Date|Year to Date",0);
+
+		// VARIABLES
+		FDayMonth	= BarsSince(Month() != Ref(Month(),-1));
+		FDayYear	= BarsSince(Year() != Ref(Year(),-1));
+		TtD_Period	= IIf(TtD_Param	==	"Day to Date",1,
+				   IIf(TtD_Param	==	"Week to Date",DayOfWeek(),
+				   IIf(TtD_Param	==	"Month to Date",FDayMonth,
+				   IIf(TtD_Param	==	"Year to Date",FDayYear,0))));
+		// FORMULA
+		TtD_Change = 100 * (Close - Ref(Close, -TtD_Period) ) / Ref(Close, -TtD_Period);
+}
+{// Specific Condition
+		F_BO260 = BO_Year AND ( ROC(Close,260) <= 30 );
+		F_BO130 = BO_HalfYear AND ( ROC(Close,130) <= 35 );
+		RS_Up = Close > Mov2 AND ( RS_Long >= 20 AND RS_Long <= 35);
+}
+	{//Buy
+		buyCon1 = (pAc1 OR pAc2 );//Price
+		buyCon2 = 1;//Volume
+		buyCon3 = Indy;//Indicator
+		BO = BO_Year OR BO_HalfYear;
+		Buy = BO;
+	}
+	
+	{//Sell
+		sellCon1 = MACD() < 0;
+		Sell = 0;
+	}
+	
+	{//Filter
+		Filter = C>=hZone AND Liq;
+		AddTextColumn( Name(), "Stock");
+		AddColumn(CRS_SCORE,"CRS-RATING");
+		AddColumn(C_vs_HighCloseYear,"% of  High Close Year",1.2,colorDefault,IIf(C_vs_HighCloseYear>=0,colorPaleGreen,colorRose));
+		AddColumn(HighHighYear,"Year High");
+		AddColumn(Strength,"Strength",1.2,colorDefault,IIf(Strength,colorTurquoise,colorWhite));
+		AddColumn(VolMA,"VolMA",1.2,colorDefault,IIf(VolMA,colorTurquoise,colorWhite));
+		AddColumn((pAc1 OR P_EMA20),"PB20d",1.2,colorDefault,IIf((pAc1 OR P_EMA20),colorPaleGreen,colorWhite));
+		AddColumn((pAc2 OR P_EMA50),"PB50w",1.2,colorDefault,IIf((pAc2 OR P_EMA50),colorPaleGreen,colorWhite));
+		AddColumn(BO_Monthly,"20W B.O",1.2,colorDefault,IIf(BO_Monthly,colorPaleGreen,colorRose));
+		AddColumn(BO_HalfYear,"130W B.O",1.2,colorDefault,IIf(BO_HalfYear,colorPaleGreen,colorRose));
+		AddColumn(BO_Year,"260W B.O",1.2,colorDefault,IIf(BO_Year,colorPaleGreen,colorRose));
+		AddColumn(ROC(Close,260),"ROC Year");
+		AddColumn(Close,"C.C");
+		AddColumn(Ref(Close,-260),"P.C");
+		AddColumn(RangeMonth,"HL20WS"); //H-L 20 Weeks Spread
+		AddColumn(CSMonth,"C20WS"); //C 20 Weeks Spread
+		AddColumn(Close_vs_HighCloseYear,"% C of CY");
+		AddColumn(PercOfEMA10,"% of MA10",1.2);
+		AddColumn(PercOfEMA50,"% of MA50",1.2);
+		AddColumn(MovTrend,"MA Trend",1.2);
+		AddColumn(TtD_Change,"P/L % to Date");
+		AddColumn(F_BO260,"1st 260wBO",1.2,colorDefault,IIf(F_BO260,colorPaleGreen,colorRose));
+		AddColumn(F_BO130,"1st 130wBO",1.2,colorDefault,IIf(F_BO130,colorPaleGreen,colorRose));
+		AddColumn(RS_Up,"RS_Long-UP",1.2,colorDefault,IIf(RS_Up,colorPaleGreen,colorRose));
+		AddColumn(VCP,"VCP");
+		AddColumn(Indy,"RSI 55 Year High");
+	}
+}
+
+{//POSITION ==================================
+	/*Position Score*/
+		PositionScore = ROC(Close,5);
+	
+	/*Position Size*/
+	/*	PositionRisk = 1; // how much (in percent of equity) we risk in single position
+		TradeRisk = (BuyPrice - Moving)/BuyPrice; // trade risk in percent equals to max. loss percentage stop
+		PctSize = PositionRisk / TradeRisk;
+		PositionSize = -1*PctSize;
+	*/	
+		//SetPositionSize(5, spsPercentOfEquity);
+	//End Position Size
+	
+}
+
+{//STOP ==================================
+	ApplyStop(stopTypeLoss, stopModePercent, 10);
+	ApplyStop(stopTypeTrailing, stopModePercent, 25);
+	ApplyStop(stopTypeProfit, stopModePercent, 30);
+	ApplyStop(stopTypeNBar,stopModeBars,3);
+}

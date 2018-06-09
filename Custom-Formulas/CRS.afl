@@ -1,0 +1,19 @@
+{//Comparative Relative Strength
+		SET = Foreign("SET", "SET");
+		CRS_Month_Period = 4;
+		CRS_Month = (C / Ref(C,-1 * CRS_Month_Period)) / (SET / Ref(SET, -1 *CRS_Month_Period));
+		CRS_Month_SCORE = 100 - (100 / (1+CRS_Month));
+		CRS_Quater_Period = 13;
+		CRS_Quater = (C / Ref(C,-1 * CRS_Quater_Period)) / (SET / Ref(SET, -1 *CRS_Quater_Period));
+		CRS_Quater_SCORE = 100 - (100 / (1+CRS_Quater));
+		CRS_HalfYear_Period = 26;
+		CRS_HalfYear = (C / Ref(C,-1 * CRS_HalfYear_Period)) / (SET / Ref(SET, -1 *CRS_HalfYear_Period));
+		CRS_HalfYear_SCORE = 100 - (100 / (1+CRS_HalfYear));
+		CRS_Year_Period = 52;
+		CRS_Year = (C / Ref(C,-1 * CRS_Year_Period)) / (SET / Ref(SET, -1 *CRS_Year_Period));
+		CRS_Year_SCORE = 100 - (100 / (1+CRS_Year));
+		CRS_SCORE = ( CRS_Month_SCORE  + CRS_Quater_SCORE + CRS_HalfYear_SCORE  ) /3;
+
+		CRS_High = Ref(HHV(CRS_SCORE, 200), -1);
+	Plot(CRS_SCORE,"CRS-RATING",colorRed);
+}

@@ -1,0 +1,82 @@
+{//MKC =====================================
+	SET =	Foreign("SET","CLOSE");
+}
+{//SIGNAL ==================================
+	{//Liquidity
+		Million = Optimize( "Million", 100, 100 , 100, 100 );
+		Value = Million*1000000;
+		Liq = Sum(Avg*Volume,10) >= Value;
+	}
+	{//Indicator
+		{//RSI
+			Indy_RSI = RSI(14) > 66.66;
+		}
+	}
+	{//MA
+		{//Short
+			Period_Short = Param("Short period",5);
+			MA_Short = EMA(Close,Period_Short);
+		}
+		{//Medium
+			Period_Medium = Param("Medium period",50,1,300);
+			MA_Medium= EMA(Close,Period_Medium);
+		}
+		{//Long
+			Period_Long = Param("Long Period",200,1,300);
+			MA_Long = EMA(Close,Period_Long);
+		}
+		{//MAC - Moving Average Classification
+			MAC = IIf(MA_Short > MA_Medium 
+							, IIf( MA_Medium > MA_Long , 1 //MA_Short > MA_Medium > MA_Long
+								, 2) //MA_SHORT > MA_Medium < MA_Long
+							,IIf(MA_Medium > MA_Long,3 // MA_SHORT < MA_MEDIUM BUT > MA_LONG
+								,4)); // MA_SHORT < MA_MEDIUM < MA_LONG
+		}
+	}
+	{//Price action on MA
+		p_Cross_Short = IIf(Cross(C,MA_Short), 1, //Price Cross MA_Short.
+										IIf( Low > MA_Short AND Ref(Close,-1) <= Ref(MA_Short,-1) ,2 , //Price jump over MA_Short
+									0)); 
+		p_Break_up_Short_Medium = Ref(Close,-1) < Ref(MA_Short,-1) AND Ref(Close,-1) < Ref(MA_Medium,-1) AND //Yesterday Close is lower both MA
+													Close > MA_Short AND Close > MA_Medium; // Just one bar it goes up.
+	}
+}
+{//Money Management
+		PositionSize = -5;
+	}
+{//Buy / Sell
+		Buy = MAC == 1 AND (p_Cross_Short != 0) AND Liq;
+		Sell = 0;
+}
+{//Stop Mode
+	ApplyStop(stopTypeNBar,stopModeBars,7);
+}
+{// Trade Option
+		SetOption("InitialEquity",700000);
+		SetOption("MinShares",100);
+		RoundLotSize = 100;
+
+		SetOption("CommissionMode", 1);
+		SetOption("CommissionAmount", 0.2);
+
+		slippage = 0.019;
+
+		numStocks = 20;
+		SetOption( "MaxOpenPositions", numStocks );
+		
+		settradedelays( 1, 1, 1, 1 );
+		BuyPrice = Open+(Open*slippage);//Open Next day
+		SellPrice = Open-(Open*slippage);
+		PriceRange = C > 0.9;
+		//PositionScore = RS_Short;
+	}
+{//Color
+	prc_color = IIf( MAC == 1 AND C > MA_Short, colorGreen , 
+							IIf( MAC == 1 AND C < MA_Short, colorYellow ,
+								IIf(
+}
+{//Plot
+	Plot(MA_Short,"MA_SHORT",ParamColor("MA_Short",colorGreen));
+	Plot(MA_Medium,"MA_Medium",ParamColor("MA_Medium",colorBlue));
+	Plot(MA_Long,"MA_Long",ParamColor("MA_Long",colorBlack));
+}

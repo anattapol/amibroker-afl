@@ -1,0 +1,6 @@
+ Period = Param("Period",10,1,500,1);
+ ROC_VS_SET = ROC(Close,Period) - ROC(Foreign("SET","Close"),Period);
+ Positive = ParamColor("Hist Positive", colorGreen );
+ Negative = ParamColor("Hist Negative", colorRed );
+ Plot( ROC_VS_SET, _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 
+ Plot( ROC_VS_SET, "ROCvsSET Histogram", IIf(ROC_VS_SET > 0 , Positive, Negative), styleNoTitle | ParamStyle("Histogram style", styleHistogram | styleNoLabel, maskHistogram ) );

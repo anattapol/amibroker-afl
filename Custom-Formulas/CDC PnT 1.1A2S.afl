@@ -1,0 +1,159 @@
+//P'Tiraphol show this formula that looks like metastock style so I ported them to afl. -- 20160723
+{//Bullish AND Bearish Condition
+	Pct = Optimize("%Change",1,1,20,1);
+	Prc = MA((O + H + L + C)/4,2);
+	Pk = Peak(Prc,Pct,1); 
+	Tr  = Trough(Prc,Pct,1);
+	Upper = Ref(ValueWhen(Pk!=Ref(Pk,-1),Prc,1),-1); //Mark previous prc peak as upper.
+	Lower = Ref(ValueWhen(Tr!=Ref(Tr,-1),Prc,1),-1);//Mark previous prc tr as lower.
+	bspu = BarsSince(prc > Upper); //
+	bspl = BarsSince(Lower > Prc);
+	Bullish = bspu < bspl; //
+	Bearish = bspu > bspl; //
+}
+{//Moving Average
+	Short_MA = EMA( Close , Optimize("Short MA",8,3,8,1));
+}
+{//Keltner Band
+	KPeriods = Param("Periods", 15, 2, 300, 1 );
+	KWidth = Param("Width", 2, 0, 10, 0.05 );
+	KColor = ParamColor("Color", colorCycle );
+	KStyle = ParamStyle("Style", styleLine | styleNoLabel);
+
+	KCenterLine = MA( Prc, KPeriods );
+	KTop   = KCenterLine + KWidth * ATR( KPeriods );
+	KBot = KCenterLine - KWidth * ATR( KPeriods );
+}
+{//Liquidity
+	Million = Optimize( "Million", 100, 100 , 800, 100 );
+	Value = Million*1000000;
+	Liq = Sum(Avg*Volume,10) >= Value;
+}
+{//Volume
+	VolCon = EMA(Volume,5) > EMA(Volume,10);
+}
+{//IBD RS Ranking
+		tr_Month =  ( (C - Ref(C, -10)) / Ref(C, -10) * 100);
+		tr_Quater = ( (C - Ref(C, -65)) / Ref(C, -65) * 100);
+		tr_HalfYear =  ( (C - Ref(C, -130)) / Ref(C, -130) * 100);
+		tr_Year =  ( (C - Ref(C, -252)) / Ref(C, -252) * 100);
+		RS_Long = (0.2*tr_Quater) + (0.3*tr_HalfYear ) + (0.5*tr_Year);
+		RS_Medium = (0.4*tr_Quater) + (0.3*tr_HalfYear ) + (0.3*tr_Year);
+		RSMW = Optimize("RSMW",0.1,0.1,0.6,0.1);
+		RSMQ = (1-RSMW)/2;
+		RSMH = (1-RSMW)/4;
+		RSMY = (1-RSMW)/4;
+		RS_Short = (RSMW*tr_Month)+(RSMQ *tr_Quater) + (RSMH*tr_HalfYear ) + (RSMY*tr_Year);
+		//RS_Min = Optimize("RS_min",50,50,70,10);
+		//RS_Max = Optimize("RS_max",150,100,200,20);
+}
+{//Color ===========================
+	Green = IIf(Prc > Upper,1,0);
+	Yellow = IIf(Bullish AND Prc < Upper,1,0);
+	Red = IIf(Bearish AND Prc < Lower,1,0);
+	Blue = IIf(Bearish AND Prc > Lower,1,0);
+	Color=IIf(Green,ParamColor("Green",colorPaleGreen), // Price Go up
+			IIf(Yellow,ParamColor("Yellow",colorGold), // Price Go up then pullback
+				IIf(Red,ParamColor("Red",colorRed), // Price Go down
+					IIf(Blue,ParamColor("Blue",colorBlue), // Price Go down then rebound
+						ParamColor("Bullish",colorBlack)) // Undefind
+				)
+			)
+		);	
+//End Color ===========================
+}
+{// Trade Option
+	SetOption("InitialEquity",20000000);
+	SetOption("MinShares",100);
+	RoundLotSize = 100;
+	//Commission detail
+	SetOption("CommissionMode", 1);
+	SetOption("CommissionAmount", 0.2);
+
+	slippage = 0.019;
+
+	numStocks = 200;
+	SetOption( "MaxOpenPositions", numStocks );
+	SetOption("PriceBoundChecking",True); //checking and adjusting buyprice/sellprice arrays to current symbol High-Low range.
+	SetOption("UsePrevBarEquityForPosSizing",True); //use previous bar closing equity to perform position sizing
+	settradedelays( 1, 1, 1, 1 ); //Next Day Trade
+	BuyPrice = Open+(Open*slippage);//Open Next day
+	SellPrice = Open-(Open*slippage);
+	PriceRange = C > 0.9;
+	PositionScore = RS_Short;
+}
+{//Buy / Sell ===========================
+	{//Other buy condition (Inactive)
+	/*
+		{//Original Code
+			Buy = Bullish AND Ref(Bearish,-1);
+			BuyPrice = ValueWhen(Buy,C,1);
+			Long = 100*((C-BuyPrice)/BuyPrice);
+
+			Sell = Bearish AND Ref(Bullish,-1);
+			SellPrice = ValueWhen(Sell,C,1);
+			Short = 100*((SellPrice-C)/SellPrice);
+		}
+		{//Buy @ first Green / Sell when Yellow
+			Buy = IIf(Green > Ref(Green,-1),1,0) AND Liq;
+			BuyPrice = Open; 	
+			Sell = Yellow;
+			SellPrice = Open;
+		}
+	{//Buy @Green AND RS_Short in (50,180) AND Liq = 100 AND PriceRange > 0.9THB AND VolCon EMA5 > EMA10 / Sell when NOT BUY - 2016 CAR = 70%
+			Buy = Green AND (RS_Short >= RS_min AND RS_Short <= RS_max)  
+						AND Liq AND PriceRange AND VolCon;
+			Sell = Close < Short_ma;
+			Buy = ExRem(Buy,Sell);
+			Sell = ExRem(Sell,Buy);
+		}
+		*/
+		}
+	{//Buy @Green AND  Liq = 100 AND PriceRange > 0.9THB AND VolCon EMA5 > EMA10 / Sell when NOT BUY - 2016 CAR = 103%
+			Buy = (Green) 
+						AND Liq AND PriceRange AND VolCon;
+			Sell = Close < Short_Ma;
+			Buy = ExRem(Buy,Sell);
+			Sell = ExRem(Sell,Buy);
+	}
+	//END Buy / Sell ========================
+}
+{//Money Management
+	/*{// 1% Risk of portfolio
+		PositionRisk = Optimize("Risk",2.5,0.5,3,0.5); // how much (in percent of equity) we risk in single position
+		TradeRisk = (BuyPrice - Upper)/BuyPrice; // trade risk in percent equals to max. loss percentage stop
+		PctSize = PositionRisk / TradeRisk;
+		InitPositionSize = -1*PctSize;
+		maxPositionSize = -20;
+		PositionSize = IIf(InitPositionSize <= maxPositionSize , maxPositionSize , InitPositionSize);
+	}*/
+	PositionSize = 100000;
+}
+{//Ploting
+_SECTION_BEGIN("Price Section");
+	Plot(Prc,"Prc",colorBlack);
+	Plot(Upper,"",ParamColor("Upper",colorBlue),styleDashed); 
+	//Plot(Lower,"",ParamColor("Lower",colorOrange),styleDashed); 
+	Plot(C,"CDC PnT 1.1A2S",Color,64);
+	shape = Buy * shapeUpArrow + Sell * shapeDownArrow; 
+	PlotShapes( shape, IIf( Buy, colorGreen, colorRed ), 0, IIf( Buy, Low, High ) );
+	Plot( KTop, "KBTop" + _PARAM_VALUES(), KColor, KStyle ); 
+	Plot( KBot, "KBBot" + _PARAM_VALUES(), KColor, KStyle ); 
+	/*{//Plot Risk
+		currenRisk = 100*(Close-Upper)/Close;
+		for( i = 0; i < BarCount; i++ ) 
+		{ 
+				if( Buy[i] ) PlotText( "%"+currenRisk[ i ], i, L[ i ]-L[i]*0.1, colorRed ); 
+				if( Buy[i] ) PlotText( "CL@"+upper[ i ], i, L[ i ]-L[i]*0.15, colorRed ); 
+
+		} 
+	}*/
+_SECTION_END();
+}
+{//Filter - Exploration
+Filter = Buy OR Sell;
+}
+{// Column =============================
+	AddColumn(Buy OR Sell,"B/S",1.2,IIf(Buy ,colorGreen, colorRed));
+// End Column ==========================
+}
